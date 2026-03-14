@@ -1219,15 +1219,22 @@ function bartImportTeams(teams){
   var imported=[],errors=[];
   teams.forEach(function(t){
     if(!t.team||!t.ortg||!t.drtg){errors.push(t.team||'?');return;}
-    importSingleTeam(t.team,t.ortg,t.drtg,t.tempo||69,t.exp||2.0,t.ats_w||null,t.ats_l||null,t.tpr||35);
-    if(teamStats[t.team]){
-      if(t.efg) teamStats[t.team].efg=t.efg;
-      if(t.tov) teamStats[t.team].tov=t.tov;
-      if(t.orb) teamStats[t.team].orb=t.orb;
-      if(t.ftr) teamStats[t.team].ftr=t.ftr;
+    importSingleTeam(t.team,t.ortg,t.drtg,t.tempo||69,t.exp!=null?t.exp:2.0,t.ats_w||null,t.ats_l||null,t.tpr!=null?t.tpr:35);
+    var s=teamStats[t.team];
+    if(s){
+      if(t.efg!=null&&!isNaN(t.efg)&&t.efg>0) s.efg=t.efg;
+      if(t.tov!=null&&!isNaN(t.tov)&&t.tov>0) s.tov=t.tov;
+      if(t.orb!=null&&!isNaN(t.orb)&&t.orb>0) s.orb=t.orb;
+      if(t.ftr!=null&&!isNaN(t.ftr)&&t.ftr>0) s.ftr=t.ftr;
     }
     imported.push(t.team);
-    bartLog('&#10003; '+t.team+' (OrtG:'+t.ortg.toFixed(1)+' DrtG:'+t.drtg.toFixed(1)+')','ok');
+    var d='OrtG:'+t.ortg.toFixed(1)+' DrtG:'+t.drtg.toFixed(1);
+    if(t.tempo>0) d+=' Pace:'+t.tempo.toFixed(1);
+    if(t.efg>0)   d+=' eFG:'+t.efg.toFixed(1)+'%';
+    if(t.tov>0)   d+=' TOV:'+t.tov.toFixed(1)+'%';
+    if(t.orb>0)   d+=' OR:'+t.orb.toFixed(1)+'%';
+    if(t.ftr>0)   d+=' FTR:'+t.ftr.toFixed(2);
+    bartLog('&#10003; '+t.team+' ('+d+')','ok');
   });
   saveTeamStats();
   bartSetProgress(100,'Done: '+imported.length+' teams imported');
