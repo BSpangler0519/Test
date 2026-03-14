@@ -601,23 +601,32 @@ button{cursor:pointer}
       </div>
       <!-- METHOD A: PASTE -->
       <div id="bart-method-paste">
+        <!-- STEP 1: T-Rank CSV (adjoe, adjde, adjt) -->
         <div style="background:#0f1629;border:1px solid #3b4fd8;border-radius:10px;padding:12px;margin-bottom:10px">
-          <div style="font-size:9px;color:#818cf8;letter-spacing:1.5px;margin-bottom:8px">EASIEST METHOD — DIRECT CSV FILE</div>
-          <div style="font-size:11px;color:#94a3b8;line-height:2.0">
-            1. Open this URL in your browser:<br/>
-            <a href="https://barttorvik.com/2026_team_results.csv" target="_blank" style="color:#f59e0b;font-weight:700;font-size:11px;word-break:break-all">barttorvik.com/2026_team_results.csv</a><br/>
-            2. You'll see raw comma-separated data<br/>
-            3. Press <strong style="color:#fff">Ctrl+A</strong> then <strong style="color:#fff">Ctrl+C</strong><br/>
-            4. Paste below &amp; tap <strong style="color:#f59e0b">PARSE &amp; IMPORT</strong>
-          </div>
-          <div style="margin-top:8px;padding-top:8px;border-top:1px solid #1a2a3a;font-size:10px;color:#445566;line-height:1.8">
-            Also works with JSON: open <span style="color:#38bdf8">barttorvik.com/2026_team_results.json</span> and paste that instead.
+          <div style="font-size:9px;color:#818cf8;letter-spacing:1.5px;margin-bottom:6px">STEP 1 — T-RANK (adjOE, adjDE, Tempo)</div>
+          <div style="font-size:11px;color:#94a3b8;line-height:1.9">
+            Open in browser &rarr; Ctrl+A &rarr; Ctrl+C &rarr; paste below:<br/>
+            <a href="https://barttorvik.com/2026_team_results.csv" target="_blank" style="color:#f59e0b;font-weight:700;word-break:break-all">barttorvik.com/2026_team_results.csv</a>
           </div>
         </div>
-        <textarea id="bart-paste-area" placeholder="Paste the CSV data from barttorvik.com/2026_team_results.csv here...&#10;&#10;It will look like:&#10;Duke,ACC,1,120.1,94.2,71.8,0.8,0.589,0.156,0.325,..." style="width:100%;height:150px;background:#080c17;border:1px solid #3b4fd8;border-radius:10px;color:#e0e6f0;padding:12px;font-size:11px;font-family:'Courier New',monospace;resize:vertical;box-sizing:border-box;outline:none"></textarea>
-        <div style="display:flex;gap:8px;margin-top:8px">
+        <textarea id="bart-paste-area" placeholder="Paste 2026_team_results.csv here (has adjOE, adjDE, Tempo)..." style="width:100%;height:120px;background:#080c17;border:1px solid #3b4fd8;border-radius:10px;color:#e0e6f0;padding:12px;font-size:11px;font-family:'Courier New',monospace;resize:vertical;box-sizing:border-box;outline:none"></textarea>
+        <div style="display:flex;gap:8px;margin-top:8px;margin-bottom:14px">
           <button onclick="bartParsePasted()" style="flex:2;padding:11px;background:#818cf8;border:none;border-radius:8px;color:#080c17;font-size:12px;font-weight:700;font-family:inherit">&#9889; PARSE &amp; IMPORT</button>
           <button onclick="document.getElementById('bart-paste-area').value=''" style="flex:1;padding:11px;background:transparent;border:1px solid #445566;border-radius:8px;color:#667788;font-size:11px;font-weight:700;font-family:inherit">CLEAR</button>
+        </div>
+        <!-- STEP 2: Four Factors CSV (efg, tov, orb, ftr) -->
+        <div style="background:#0f1a0f;border:1px solid #2a5a2a;border-radius:10px;padding:12px;margin-bottom:10px">
+          <div style="font-size:9px;color:#34d399;letter-spacing:1.5px;margin-bottom:6px">STEP 2 — FOUR FACTORS (eFG%, TOV%, ORB%, FTR) — OPTIONAL</div>
+          <div style="font-size:11px;color:#94a3b8;line-height:1.9">
+            Open in browser &rarr; Ctrl+A &rarr; Ctrl+C &rarr; paste below:<br/>
+            <a href="https://barttorvik.com/2026_four_factors.csv" target="_blank" style="color:#34d399;font-weight:700;word-break:break-all">barttorvik.com/2026_four_factors.csv</a><br/>
+            <span style="font-size:10px;color:#445566">If that URL doesn't work, try: barttorvik.com/teamstats.php?year=2026 and use the CSV download button on that page.</span>
+          </div>
+        </div>
+        <textarea id="bart-paste-area2" placeholder="Paste four factors CSV here (optional — adds eFG%, TOV%, ORB%, FTR)..." style="width:100%;height:100px;background:#080c17;border:1px solid #2a5a2a;border-radius:10px;color:#e0e6f0;padding:12px;font-size:11px;font-family:'Courier New',monospace;resize:vertical;box-sizing:border-box;outline:none"></textarea>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button onclick="bartParseFourFactors()" style="flex:2;padding:11px;background:#34d399;border:none;border-radius:8px;color:#080c17;font-size:12px;font-weight:700;font-family:inherit">&#9889; IMPORT FOUR FACTORS</button>
+          <button onclick="document.getElementById('bart-paste-area2').value=''" style="flex:1;padding:11px;background:transparent;border:1px solid #445566;border-radius:8px;color:#667788;font-size:11px;font-weight:700;font-family:inherit">CLEAR</button>
         </div>
       </div>
       <!-- METHOD B: LIVE FETCH -->
@@ -1073,14 +1082,7 @@ function bartParsePasted(){
 // PRIMARY: Barttorvik 2026_team_results.csv — NO header, fixed column positions
 // col 0=team  1=conf  2=rank  3=adjoe  4=adjde  5=tempo  6=efg%  7=dto%  8=orb%  9=ftrate
 function bartParseCSVNoHeader(lines){
-  // Debug: show first row column-by-column so we can confirm correct positions
-  if(lines.length>0){
-    var dbg=lines[0].split(',').map(function(s){return s.trim().replace(/^"|"$/g,'');});
-    bartLog('DEBUG â€" first row ('+dbg.length+' cols):','warn');
-    dbg.slice(0,20).forEach(function(v,i){bartLog('  ['+i+']='+v,'');});
-  }
-  var teams=[], seen={};
-  lines.forEach(function(line,idx){
+  var teams=[], seen={};  lines.forEach(function(line,idx){
     var p=line.split(',').map(function(s){return s.trim().replace(/^"|"$/g,'');});
     if(p.length<5) return;
     var name=p[0];
@@ -1105,41 +1107,39 @@ function bartParseCSVNoHeader(lines){
   return teams;
 }
 
-// CSV with header row — log all headers so we can confirm matches, then map columns
+// CSV with header row — Barttorvik 2026_team_results.csv confirmed column map:
+// [0]=rank [1]=team [2]=conf [3]=record [4]=adjoe [5]=oe Rank [6]=adjde [7]=de Rank
+// [8]=barthag ... [44]=adjt (tempo)
+// Note: efg/tov/orb/ftr are NOT in this CSV — use estimated values from importSingleTeam
 function bartParseCSVWithHeader(lines){
   var header=lines[0].toLowerCase().split(',').map(function(s){return s.trim();});
-  // Debug: log every header column so we can see exact names
-  bartLog('Header row ('+header.length+' cols):','warn');
-  header.forEach(function(h,i){bartLog('  ['+i+']='+h,'');});
-  var hmap={};
+  // Build map from actual header names (handles any column order)
+  var hmap={team:1, ortg:4, drtg:6, tempo:44}; // confirmed defaults
   header.forEach(function(h,i){
-    if(h.match(/^team/))                      hmap.team=i;
-    else if(h.match(/adjoe|adjo[^d]|^adjo$/)) hmap.ortg=i;
-    else if(h.match(/adjde|adjd[^o]|^adjd$/)) hmap.drtg=i;
-    else if(h.match(/tempo|adj_t|adjtempo/))  hmap.tempo=i;
-    else if(h.match(/^exp/))                  hmap.exp=i;
-    else if(h.match(/efg/))                   hmap.efg=i;
-    else if(h.match(/dto|tov%|tov_|^tov$/))  hmap.tov=i;
-    else if(h.match(/^or[b%_]|oreb/))         hmap.orb=i;
-    else if(h.match(/^ftr|ftrate/))           hmap.ftr=i;
-    else if(h.match(/3pr|three|^tpr/))        hmap.tpr=i;
+    if(h==='team')              hmap.team=i;
+    else if(h==='adjoe')        hmap.ortg=i;
+    else if(h==='adjde')        hmap.drtg=i;
+    else if(h==='adjt')         hmap.tempo=i;
+    else if(h.match(/^exp/))  hmap.exp=i;
+    else if(h==='efg%'||h==='efg') hmap.efg=i;
+    else if(h==='dto%'||h==='tov%') hmap.tov=i;
+    else if(h==='or%'||h==='orb%') hmap.orb=i;
+    else if(h==='ftr'||h==='ftrate') hmap.ftr=i;
+    else if(h==='3pr'||h==='tpr')    hmap.tpr=i;
   });
-  bartLog('Mapped: team='+hmap.team+' ortg='+hmap.ortg+' drtg='+hmap.drtg+' tempo='+hmap.tempo+' efg='+hmap.efg+' tov='+hmap.tov+' orb='+hmap.orb+' ftr='+hmap.ftr,'warn');
-  if(hmap.ortg===undefined||hmap.drtg===undefined){
-    bartLog('Header found but missing adjoe/adjde columns','err');
-    return [];
-  }
+  bartLog('Using columns: team=['+hmap.team+'] adjoe=['+hmap.ortg+'] adjde=['+hmap.drtg+'] adjt=['+hmap.tempo+']','warn');
   var teams=[], seen={};
   lines.slice(1).forEach(function(line){
     var p=line.split(',').map(function(s){return s.trim().replace(/^"|"$/g,'');});
-    var name=p[hmap.team||0];
+    if(p.length<=hmap.tempo) return; // row too short (missing adjt column)
+    var name=p[hmap.team];
     var ortg=parseFloat(p[hmap.ortg]);
     var drtg=parseFloat(p[hmap.drtg]);
     if(!name||isNaN(ortg)||isNaN(drtg)||ortg<80||ortg>145||drtg<75||drtg>135) return;
     if(seen[name]) return;
     seen[name]=true;
-    var t={team:name,ortg:ortg,drtg:drtg};
-    t.tempo=hmap.tempo!==undefined?parseFloat(p[hmap.tempo])||69:69;
+    var t={team:name, ortg:ortg, drtg:drtg};
+    t.tempo=parseFloat(p[hmap.tempo])||69;
     if(hmap.exp!==undefined)  t.exp=parseFloat(p[hmap.exp])||2.0;
     if(hmap.tpr!==undefined)  t.tpr=parseFloat(p[hmap.tpr])||35;
     if(hmap.efg!==undefined)  t.efg=parseFloat(p[hmap.efg])||0;
@@ -1250,6 +1250,53 @@ function bartImportTeams(teams){
   if(errors.length) bartLog('Skipped: '+errors.join(', '),'warn');
   showToast('&#10003; Imported '+imported.length+' teams from Barttorvik');
 }
+
+// Parse and merge Four Factors from barttorvik.com/2026_four_factors.csv or teamstats.php CSV
+// Expected columns (from toRvik research): team, off_efg, off_to, off_or, off_ftr
+// The parser uses header detection so it handles any column order
+function bartParseFourFactors(){
+  var raw=(document.getElementById('bart-paste-area2').value||'').trim();
+  if(!raw){showToast('Paste four factors CSV first');return;}
+  bartShowProgress('Importing four factors...');
+  bartSetProgress(10);
+  var lines=raw.split('\n').map(function(l){return l.trim();}).filter(Boolean);
+  if(lines.length<2){bartLog('Not enough data','err');return;}
+
+  // Detect header row
+  var header=lines[0].toLowerCase().split(',').map(function(s){return s.trim();});
+  var hmap={};
+  header.forEach(function(h,i){
+    if(h==='team'||h==='team name') hmap.team=i;
+    else if(h.match(/off_?efg|efg%?|^efg$/)) hmap.efg=i;
+    else if(h.match(/off_?to|tov%?|dto%?|^to%$/)) hmap.tov=i;
+    else if(h.match(/off_?or|orb%?|^or%$/)) hmap.orb=i;
+    else if(h.match(/off_?ftr|^ftr$|ftrate/)) hmap.ftr=i;
+  });
+
+  bartLog('Four Factors header cols: '+header.length,'warn');
+  bartLog('Mapped: team='+hmap.team+' efg='+hmap.efg+' tov='+hmap.tov+' orb='+hmap.orb+' ftr='+hmap.ftr,'warn');
+
+  if(hmap.team===undefined){bartLog('Could not find team column in header','err');bartSetProgress(100,'Failed');return;}
+
+  var updated=0, skipped=0;
+  lines.slice(1).forEach(function(line){
+    var p=line.split(',').map(function(s){return s.trim().replace(/^"|"$/g,'');});
+    var name=p[hmap.team];
+    if(!name) return;
+    var s=teamStats[name];
+    if(!s){skipped++;return;}
+    if(hmap.efg!==undefined&&p[hmap.efg]) s.efg=parseFloat(p[hmap.efg])||s.efg;
+    if(hmap.tov!==undefined&&p[hmap.tov]) s.tov=parseFloat(p[hmap.tov])||s.tov;
+    if(hmap.orb!==undefined&&p[hmap.orb]) s.orb=parseFloat(p[hmap.orb])||s.orb;
+    if(hmap.ftr!==undefined&&p[hmap.ftr]) s.ftr=parseFloat(p[hmap.ftr])||s.ftr;
+    updated++;
+    bartLog('&#10003; '+name+' eFG:'+(s.efg||0).toFixed(1)+' TOV:'+(s.tov||0).toFixed(1)+' OR:'+(s.orb||0).toFixed(1)+' FTR:'+(s.ftr||0).toFixed(2),'ok');
+  });
+  saveTeamStats();
+  bartSetProgress(100,'Updated '+updated+' teams'+(skipped?' ('+skipped+' not found — import T-Rank first)':''));
+  showToast('&#10003; Four factors merged: '+updated+' teams');
+}
+
 async function bartFetchLive(){
   var btn=document.getElementById('bart-fetch-btn');
   btn.disabled=true;btn.textContent='&#9203; Fetching...';
