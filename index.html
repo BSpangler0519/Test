@@ -1073,6 +1073,12 @@ function bartParsePasted(){
 // PRIMARY: Barttorvik 2026_team_results.csv — NO header, fixed column positions
 // col 0=team  1=conf  2=rank  3=adjoe  4=adjde  5=tempo  6=efg%  7=dto%  8=orb%  9=ftrate
 function bartParseCSVNoHeader(lines){
+  // Debug: show first row column-by-column so we can confirm correct positions
+  if(lines.length>0){
+    var dbg=lines[0].split(',').map(function(s){return s.trim().replace(/^"|"$/g,'');});
+    bartLog('DEBUG â€" first row ('+dbg.length+' cols):','warn');
+    dbg.slice(0,20).forEach(function(v,i){bartLog('  ['+i+']='+v,'');});
+  }
   var teams=[], seen={};
   lines.forEach(function(line,idx){
     var p=line.split(',').map(function(s){return s.trim().replace(/^"|"$/g,'');});
@@ -1080,8 +1086,7 @@ function bartParseCSVNoHeader(lines){
     var name=p[0];
     var ortg=parseFloat(p[3]);
     var drtg=parseFloat(p[4]);
-    // Validate: name must be a string, ortg/drtg must be realistic efficiency values
-    if(!name||name.match(/^\d/)) return;          // skip if name starts with digit
+    if(!name||name.match(/^\d/)) return;
     if(isNaN(ortg)||isNaN(drtg)) return;
     if(ortg<80||ortg>145||drtg<75||drtg>135) return;
     if(seen[name]) return;
