@@ -602,10 +602,19 @@ button{cursor:pointer}
       <!-- METHOD A: PASTE -->
       <div id="bart-method-paste">
         <div style="background:#0f1629;border:1px solid #3b4fd8;border-radius:10px;padding:12px;margin-bottom:10px">
-          <div style="font-size:9px;color:#818cf8;letter-spacing:1.5px;margin-bottom:8px">STEP-BY-STEP</div>
-          <div style="font-size:11px;color:#94a3b8;line-height:1.9">1. Visit <a href="https://barttorvik.com/trank.php" target="_blank" style="color:#38bdf8;font-weight:700">barttorvik.com/trank.php</a><br/>2. Select All (Ctrl+A) &rarr; Copy (Ctrl+C)<br/>3. Paste below and tap <strong style="color:#f59e0b">PARSE &amp; IMPORT</strong></div>
+          <div style="font-size:9px;color:#818cf8;letter-spacing:1.5px;margin-bottom:8px">EASIEST METHOD — DIRECT CSV FILE</div>
+          <div style="font-size:11px;color:#94a3b8;line-height:2.0">
+            1. Open this URL in your browser:<br/>
+            <a href="https://barttorvik.com/2026_team_results.csv" target="_blank" style="color:#f59e0b;font-weight:700;font-size:11px;word-break:break-all">barttorvik.com/2026_team_results.csv</a><br/>
+            2. You'll see raw comma-separated data<br/>
+            3. Press <strong style="color:#fff">Ctrl+A</strong> then <strong style="color:#fff">Ctrl+C</strong><br/>
+            4. Paste below &amp; tap <strong style="color:#f59e0b">PARSE &amp; IMPORT</strong>
+          </div>
+          <div style="margin-top:8px;padding-top:8px;border-top:1px solid #1a2a3a;font-size:10px;color:#445566;line-height:1.8">
+            Also works with JSON: open <span style="color:#38bdf8">barttorvik.com/2026_team_results.json</span> and paste that instead.
+          </div>
         </div>
-        <textarea id="bart-paste-area" placeholder="Paste Barttorvik page content here...&#10;&#10;Auto-detects AdjOE, AdjDE, Tempo, Exp columns." style="width:100%;height:150px;background:#080c17;border:1px solid #3b4fd8;border-radius:10px;color:#e0e6f0;padding:12px;font-size:11px;font-family:'Courier New',monospace;resize:vertical;box-sizing:border-box;outline:none"></textarea>
+        <textarea id="bart-paste-area" placeholder="Paste the CSV data from barttorvik.com/2026_team_results.csv here...&#10;&#10;It will look like:&#10;Duke,ACC,1,120.1,94.2,71.8,0.8,0.589,0.156,0.325,..." style="width:100%;height:150px;background:#080c17;border:1px solid #3b4fd8;border-radius:10px;color:#e0e6f0;padding:12px;font-size:11px;font-family:'Courier New',monospace;resize:vertical;box-sizing:border-box;outline:none"></textarea>
         <div style="display:flex;gap:8px;margin-top:8px">
           <button onclick="bartParsePasted()" style="flex:2;padding:11px;background:#818cf8;border:none;border-radius:8px;color:#080c17;font-size:12px;font-weight:700;font-family:inherit">&#9889; PARSE &amp; IMPORT</button>
           <button onclick="document.getElementById('bart-paste-area').value=''" style="flex:1;padding:11px;background:transparent;border:1px solid #445566;border-radius:8px;color:#667788;font-size:11px;font-weight:700;font-family:inherit">CLEAR</button>
@@ -1002,78 +1011,207 @@ function bartLog(msg,type){
 }
 function bartParsePasted(){
   var raw=(document.getElementById('bart-paste-area').value||'').trim();
-  if(!raw){showToast('Paste Barttorvik page content first');return;}
-  bartShowProgress('Parsing pasted content...');
-  bartSetProgress(20);
-  var lines=raw.split('\n').map(function(l){return l.trim();}).filter(Boolean);
+  if(!raw){showToast('Paste CSV data from barttorvik.com/2026_team_results.csv first');return;}
+  bartShowProgress('Detecting format...');
+  bartSetProgress(10);
   var teams=[];
-  var tabLines=lines.filter(function(l){return l.split('\t').length>=4;});
-  if(tabLines.length>5) teams=bartParseTabular(tabLines);
-  if(!teams.length) teams=bartParseFlexible(lines);
-  if(!teams.length){
-    bartLog('Could not auto-parse. Try copying the full page (Ctrl+A then Ctrl+C on barttorvik.com/trank.php)','err');
-    bartSetProgress(100,'Parse failed');
-    showToast('Parse failed — see tips above');
-    return;
+
+  // Strategy 1: JSON array (from 2026_team_results.json or getteamdata.php)
+  if(raw.charAt(0)==='['){
+    try{
+      var json=JSON.parse(raw);
+      if(Array.isArray(json)&&json.length>0){
+        if(typeof json[0]==='object'&&!Array.isArray(json[0])){
+          bartLog('Detected: named-key JSON','');
+          teams=bartParseNamedJSON(json);
+        } else {
+          bartLog('Detected: indexed-array JSON','');
+          teams=bartParseIndexedJSON(json);
+        }
+      }
+    }catch(e){ bartLog('JSON parse error: '+e.message,'warn'); }
   }
-  bartSetProgress(70,'Parsed '+teams.length+' teams');
-  bartImportTeams(teams);
-}
-function bartParseTabular(lines){
-  var headerIdx=-1,hmap={};
-  for(var i=0;i<Math.min(15,lines.length);i++){
-    var parts=lines[i].split('\t');
-    var lc=parts.map(function(p){return p.toLowerCase().trim();});
-    if(lc.indexOf('team')>-1||lc.some(function(x){return x.match(/adjo|adjoe/i);})){
-      headerIdx=i;
-      lc.forEach(function(h,idx){
-        if(h.match(/^team/i)) hmap.team=idx;
-        else if(h.match(/adjo/i)) hmap.ortg=idx;
-        else if(h.match(/adjd/i)) hmap.drtg=idx;
-        else if(h.match(/tempo/i)) hmap.tempo=idx;
-        else if(h.match(/^exp/i)) hmap.exp=idx;
-        else if(h.match(/^3pr|three.*pt/i)) hmap.tpr=idx;
-        else if(h.match(/efg/i)) hmap.efg=idx;
-        else if(h.match(/tov/i)) hmap.tov=idx;
-        else if(h.match(/^or%|orpct/i)) hmap.orb=idx;
-        else if(h.match(/^ftr/i)) hmap.ftr=idx;
-      });
-      break;
+
+  // Strategy 2: CSV — barttorvik.com/2026_team_results.csv has NO header row
+  // Column order (confirmed no-header): team(0), conf(1), rank(2), adjoe(3), adjde(4), tempo(5),
+  //   efg%(6), dto%(7), orb%(8), ftrate(9), record(10), wins(11), losses(12), ...
+  if(!teams.length){
+    var lines=raw.split('\n').map(function(l){return l.trim();}).filter(Boolean);
+    if(!lines.length){bartLog('No lines found','err');return;}
+    var firstParts=lines[0].split(',');
+    // Detect if there IS a header (first cell is non-numeric word like "team","Team","rk")
+    var firstCell=(firstParts[0]||'').trim().toLowerCase();
+    var hasHeader=isNaN(firstCell.charAt(0))&&firstCell.match(/^[a-z]/i)&&
+                  (firstParts.length>3)&&isNaN(parseFloat(firstParts[3]));
+    if(hasHeader){
+      bartLog('Detected: CSV with header row','');
+      teams=bartParseCSVWithHeader(lines);
+    } else {
+      bartLog('Detected: Barttorvik no-header CSV (standard format)','');
+      teams=bartParseCSVNoHeader(lines);
     }
   }
-  if(headerIdx<0||Object.keys(hmap).length<2) return [];
-  var teams=[];
-  for(var i=headerIdx+1;i<lines.length;i++){
-    var parts=lines[i].split('\t');
-    if(parts.length<3) continue;
-    var name=(hmap.team!==undefined?parts[hmap.team]:parts[1]||'').trim();
-    var ortg=parseFloat(hmap.ortg!==undefined?parts[hmap.ortg]:parts[2]);
-    var drtg=parseFloat(hmap.drtg!==undefined?parts[hmap.drtg]:parts[3]);
-    if(!name||isNaN(ortg)||isNaN(drtg)||ortg<80||ortg>140) continue;
-    var t={team:name,ortg:ortg,drtg:drtg};
-    if(hmap.tempo!==undefined) t.tempo=parseFloat(parts[hmap.tempo])||69;
-    if(hmap.exp!==undefined) t.exp=parseFloat(parts[hmap.exp])||2.0;
-    if(hmap.tpr!==undefined) t.tpr=parseFloat(parts[hmap.tpr])||35;
-    if(hmap.efg!==undefined) t.efg=parseFloat(parts[hmap.efg])||0;
-    if(hmap.tov!==undefined) t.tov=parseFloat(parts[hmap.tov])||0;
-    if(hmap.orb!==undefined) t.orb=parseFloat(parts[hmap.orb])||0;
-    if(hmap.ftr!==undefined) t.ftr=parseFloat(parts[hmap.ftr])||0;
-    teams.push(t);
+
+  // Strategy 3: Manual fallback (Team, OrtG, DrtG, Tempo, ...)
+  if(!teams.length){
+    var lines=raw.split('\n').map(function(l){return l.trim();}).filter(Boolean);
+    bartLog('Trying manual format fallback...','warn');
+    teams=bartParseManualFormat(lines);
   }
+
+  if(!teams.length){
+    bartLog('â€" PARSE FAILED â€"','err');
+    bartLog('Open barttorvik.com/2026_team_results.csv in your browser, press Ctrl+A then Ctrl+C, and paste here.','err');
+    bartSetProgress(100,'Parse failed');
+    showToast('Parse failed — check format');
+    return;
+  }
+  bartSetProgress(60,'Parsed '+teams.length+' teams — importing...');
+  bartImportTeams(teams);
+}
+
+// PRIMARY: Barttorvik 2026_team_results.csv — NO header, fixed column positions
+// col 0=team  1=conf  2=rank  3=adjoe  4=adjde  5=tempo  6=efg%  7=dto%  8=orb%  9=ftrate
+function bartParseCSVNoHeader(lines){
+  var teams=[], seen={};
+  lines.forEach(function(line,idx){
+    var p=line.split(',').map(function(s){return s.trim().replace(/^"|"$/g,'');});
+    if(p.length<5) return;
+    var name=p[0];
+    var ortg=parseFloat(p[3]);
+    var drtg=parseFloat(p[4]);
+    // Validate: name must be a string, ortg/drtg must be realistic efficiency values
+    if(!name||name.match(/^\d/)) return;          // skip if name starts with digit
+    if(isNaN(ortg)||isNaN(drtg)) return;
+    if(ortg<80||ortg>145||drtg<75||drtg>135) return;
+    if(seen[name]) return;
+    seen[name]=true;
+    teams.push({
+      team:  name,
+      ortg:  ortg,
+      drtg:  drtg,
+      tempo: parseFloat(p[5])||69,
+      efg:   parseFloat(p[6])||0,
+      tov:   parseFloat(p[7])||0,
+      orb:   parseFloat(p[8])||0,
+      ftr:   parseFloat(p[9])||0
+    });
+  });
   return teams;
 }
-function bartParseFlexible(lines){
-  var teams=[],seen={};
+
+// SECONDARY: CSV that happens to have a header row — detect column positions dynamically
+function bartParseCSVWithHeader(lines){
+  var header=lines[0].toLowerCase().split(',').map(function(s){return s.trim();});
+  var hmap={};
+  header.forEach(function(h,i){
+    if(h.match(/^team/))            hmap.team=i;
+    else if(h.match(/adjoe|adjo\b/)) hmap.ortg=i;
+    else if(h.match(/adjde|adjd\b/)) hmap.drtg=i;
+    else if(h.match(/tempo/))        hmap.tempo=i;
+    else if(h.match(/^exp/))         hmap.exp=i;
+    else if(h.match(/efg/))          hmap.efg=i;
+    else if(h.match(/dto|tov/))      hmap.tov=i;
+    else if(h.match(/^or[b%]/))      hmap.orb=i;
+    else if(h.match(/ftr/))          hmap.ftr=i;
+    else if(h.match(/3pr|three/))    hmap.tpr=i;
+  });
+  if(hmap.ortg===undefined||hmap.drtg===undefined){
+    bartLog('Header found but missing adjoe/adjde columns','err');
+    return [];
+  }
+  var teams=[], seen={};
+  lines.slice(1).forEach(function(line){
+    var p=line.split(',').map(function(s){return s.trim().replace(/^"|"$/g,'');});
+    var name=p[hmap.team||0];
+    var ortg=parseFloat(p[hmap.ortg]);
+    var drtg=parseFloat(p[hmap.drtg]);
+    if(!name||isNaN(ortg)||isNaN(drtg)||ortg<80||ortg>145||drtg<75||drtg>135) return;
+    if(seen[name]) return;
+    seen[name]=true;
+    var t={team:name,ortg:ortg,drtg:drtg};
+    t.tempo=hmap.tempo!==undefined?parseFloat(p[hmap.tempo])||69:69;
+    if(hmap.exp!==undefined)  t.exp=parseFloat(p[hmap.exp])||2.0;
+    if(hmap.tpr!==undefined)  t.tpr=parseFloat(p[hmap.tpr])||35;
+    if(hmap.efg!==undefined)  t.efg=parseFloat(p[hmap.efg])||0;
+    if(hmap.tov!==undefined)  t.tov=parseFloat(p[hmap.tov])||0;
+    if(hmap.orb!==undefined)  t.orb=parseFloat(p[hmap.orb])||0;
+    if(hmap.ftr!==undefined)  t.ftr=parseFloat(p[hmap.ftr])||0;
+    teams.push(t);
+  });
+  return teams;
+}
+
+function bartParseNamedJSON(json){
+  var teams=[], seen={};
+  json.forEach(function(row){
+    if(typeof row!=='object') return;
+    var name=row.team||row.Team||row.team_name||row.TeamName||'';
+    var ortg=parseFloat(row.adjoe||row.adjo||row.adj_o||row.AdjOE||row.ortg||0);
+    var drtg=parseFloat(row.adjde||row.adjd||row.adj_d||row.AdjDE||row.drtg||0);
+    if(!name||!ortg||!drtg||ortg<80||ortg>145) return;
+    if(seen[name]) return;
+    seen[name]=true;
+    teams.push({
+      team:name, ortg:ortg, drtg:drtg,
+      tempo:parseFloat(row.adjtempo||row.tempo||row.adj_t||69),
+      exp:parseFloat(row.exp||row.experience||2.0),
+      tpr:parseFloat(row.tpr||row['3pr']||35),
+      efg:parseFloat(row.efg||row.efg_pct||0),
+      tov:parseFloat(row.tov||row.to_pct||row.dto||0),
+      orb:parseFloat(row.orb||row.or_pct||0),
+      ftr:parseFloat(row.ftr||row.ftrate||0)
+    });
+  });
+  return teams;
+}
+
+function bartParseIndexedJSON(json){
+  // Barttorvik getteamdata.php indexed format:
+  // [0]=team, [1]=conf, [2]=rank, [3]=adjoe, [4]=adjde, [5]=tempo, [6]=wins, [7]=losses, [8]=wab, [9]=exp, [10]=tpr, [11]=efg, [12]=dto, [13]=orb, [14]=ftr
+  var teams=[], seen={};
+  json.forEach(function(row){
+    if(!Array.isArray(row)||row.length<5) return;
+    var name=row[0];
+    var ortg=parseFloat(row[3]);
+    var drtg=parseFloat(row[4]);
+    if(!name||isNaN(ortg)||isNaN(drtg)||ortg<80||ortg>145) return;
+    if(seen[name]) return;
+    seen[name]=true;
+    teams.push({
+      team:name, ortg:ortg, drtg:drtg,
+      tempo:parseFloat(row[5])||69,
+      exp:parseFloat(row[9])||2.0,
+      tpr:parseFloat(row[10])||35,
+      efg:parseFloat(row[11])||0,
+      tov:parseFloat(row[12])||0,
+      orb:parseFloat(row[13])||0,
+      ftr:parseFloat(row[14])||0
+    });
+  });
+  return teams;
+}
+
+function bartParseManualFormat(lines){
+  // Manual format: Team, OrtG, DrtG, Tempo, Exp, ATS_W, ATS_L, 3PR
+  var teams=[], seen={};
   lines.forEach(function(line){
     var parts=line.split(/[\t,;]+/).map(function(p){return p.trim();});
     if(parts.length<3) return;
     var name=parts[0];
     var ortg=parseFloat(parts[1]);
     var drtg=parseFloat(parts[2]);
-    if(!name||isNaN(ortg)||isNaN(drtg)||ortg<85||ortg>135||drtg<85||drtg>130) return;
+    if(!name||isNaN(ortg)||isNaN(drtg)||ortg<80||ortg>145||drtg<80||drtg>135) return;
     if(seen[name]) return;
     seen[name]=true;
-    teams.push({team:name,ortg:ortg,drtg:drtg,tempo:parseFloat(parts[3])||69,exp:parseFloat(parts[4])||2.0,tpr:parseFloat(parts[7])||35});
+    teams.push({
+      team:name, ortg:ortg, drtg:drtg,
+      tempo:parseFloat(parts[3])||69,
+      exp:parseFloat(parts[4])||2.0,
+      ats_w:parts[5]?parseInt(parts[5]):null,
+      ats_l:parts[6]?parseInt(parts[6]):null,
+      tpr:parseFloat(parts[7])||35
+    });
   });
   return teams;
 }
