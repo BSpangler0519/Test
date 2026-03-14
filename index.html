@@ -468,8 +468,9 @@ button{cursor:pointer}
   <!-- ===== TOOLS TAB ===== -->
   <div id="tab-tools" class="tab-content" style="display:none">
     <div class="sub-tabs">
-      <button class="sub-tab active" data-st="calc-panel" onclick="switchToolsSub('calc-panel')">CALCULATOR</button>
+      <button class="sub-tab active" data-st="calc-panel" onclick="switchToolsSub('calc-panel')">CALC</button>
       <button class="sub-tab" data-st="stats-panel" onclick="switchToolsSub('stats-panel')">STATS</button>
+      <button class="sub-tab" data-st="bart-panel" onclick="switchToolsSub('bart-panel')">BARTTORVIK</button>
       <button class="sub-tab" data-st="keys-panel" onclick="switchToolsSub('keys-panel')">KEYS</button>
     </div>
 
@@ -582,6 +583,83 @@ button{cursor:pointer}
             <button onclick="clearBulkCustomStats()" style="flex:1;padding:10px;background:transparent;border:1px solid #f97316;border-radius:8px;color:#f97316;font-size:11px;font-weight:700;font-family:inherit">RESET ALL</button>
           </div>
           <div id="bulk-import-result" style="margin-top:10px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BARTTORVIK PANEL -->
+    <div id="bart-panel" style="display:none">
+      <div style="background:linear-gradient(135deg,#0d1521,#0f1a2e);border:1px solid #3b4fd8;border-radius:14px;padding:16px;margin-bottom:14px">
+        <div style="font-size:10px;color:#818cf8;letter-spacing:2px;margin-bottom:4px">NCAA STATS IMPORT</div>
+        <div style="font-size:16px;font-weight:700;color:#fff">Barttorvik.com</div>
+        <div style="font-size:11px;color:#7a8fa6;margin-top:4px;line-height:1.6">Import live AdjOE, AdjDE, Tempo, and Experience ratings to power AI analysis and pick generation.</div>
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:12px">
+        <button id="bart-tab-paste" onclick="bartSwitchMethod('paste')" style="flex:1;padding:8px 4px;background:rgba(245,158,11,0.15);border:1px solid #f59e0b;border-radius:8px;color:#f59e0b;font-size:10px;font-weight:700;font-family:inherit;letter-spacing:0.5px">PASTE</button>
+        <button id="bart-tab-fetch" onclick="bartSwitchMethod('fetch')" style="flex:1;padding:8px 4px;background:transparent;border:1px solid #2a3a4a;border-radius:8px;color:#667788;font-size:10px;font-weight:700;font-family:inherit;letter-spacing:0.5px">LIVE FETCH</button>
+        <button id="bart-tab-export" onclick="bartSwitchMethod('export')" style="flex:1;padding:8px 4px;background:transparent;border:1px solid #2a3a4a;border-radius:8px;color:#667788;font-size:10px;font-weight:700;font-family:inherit;letter-spacing:0.5px">EXPORT TSV</button>
+      </div>
+      <!-- METHOD A: PASTE -->
+      <div id="bart-method-paste">
+        <div style="background:#0f1629;border:1px solid #3b4fd8;border-radius:10px;padding:12px;margin-bottom:10px">
+          <div style="font-size:9px;color:#818cf8;letter-spacing:1.5px;margin-bottom:8px">STEP-BY-STEP</div>
+          <div style="font-size:11px;color:#94a3b8;line-height:1.9">1. Visit <a href="https://barttorvik.com/trank.php" target="_blank" style="color:#38bdf8;font-weight:700">barttorvik.com/trank.php</a><br/>2. Select All (Ctrl+A) &rarr; Copy (Ctrl+C)<br/>3. Paste below and tap <strong style="color:#f59e0b">PARSE &amp; IMPORT</strong></div>
+        </div>
+        <textarea id="bart-paste-area" placeholder="Paste Barttorvik page content here...&#10;&#10;Auto-detects AdjOE, AdjDE, Tempo, Exp columns." style="width:100%;height:150px;background:#080c17;border:1px solid #3b4fd8;border-radius:10px;color:#e0e6f0;padding:12px;font-size:11px;font-family:'Courier New',monospace;resize:vertical;box-sizing:border-box;outline:none"></textarea>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button onclick="bartParsePasted()" style="flex:2;padding:11px;background:#818cf8;border:none;border-radius:8px;color:#080c17;font-size:12px;font-weight:700;font-family:inherit">&#9889; PARSE &amp; IMPORT</button>
+          <button onclick="document.getElementById('bart-paste-area').value=''" style="flex:1;padding:11px;background:transparent;border:1px solid #445566;border-radius:8px;color:#667788;font-size:11px;font-weight:700;font-family:inherit">CLEAR</button>
+        </div>
+      </div>
+      <!-- METHOD B: LIVE FETCH -->
+      <div id="bart-method-fetch" style="display:none">
+        <div style="background:#0f1629;border:1px solid #3b4fd8;border-radius:10px;padding:12px;margin-bottom:12px">
+          <div style="font-size:9px;color:#818cf8;letter-spacing:1.5px;margin-bottom:8px">CORS PROXY FETCH</div>
+          <div style="font-size:11px;color:#94a3b8;line-height:1.8">Fetches Barttorvik data via public CORS proxy. May be rate-limited. Use Paste method if this fails.</div>
+        </div>
+        <div style="margin-bottom:10px">
+          <label style="font-size:9px;color:#8aa0b8;letter-spacing:1px;display:block;margin-bottom:4px">SEASON YEAR</label>
+          <select id="bart-year" style="width:100%;background:#080c17;border:1px solid #1e2e40;border-radius:8px;color:#fff;padding:9px 10px;font-size:13px;font-family:inherit">
+            <option value="2026">2025-26 (Current)</option>
+            <option value="2025">2024-25</option>
+          </select>
+        </div>
+        <button onclick="bartFetchLive()" id="bart-fetch-btn" style="width:100%;padding:11px;background:#38bdf8;border:none;border-radius:8px;color:#080c17;font-size:12px;font-weight:700;font-family:inherit">&#127758; FETCH LIVE DATA</button>
+      </div>
+      <!-- METHOD C: EXPORT TSV -->
+      <div id="bart-method-export" style="display:none">
+        <div style="background:#0a1a0a;border:1px solid #2a4a20;border-radius:10px;padding:12px;margin-bottom:12px">
+          <div style="font-size:9px;color:#34d399;letter-spacing:1.5px;margin-bottom:8px">EXPORT CURRENT DATABASE</div>
+          <div style="font-size:11px;color:#94a3b8;line-height:1.8">Exports all team stats as a tab-delimited TSV file for spreadsheets or re-import.</div>
+        </div>
+        <div style="margin-bottom:10px">
+          <select id="bart-export-format" style="width:100%;background:#080c17;border:1px solid #1e2e40;border-radius:8px;color:#fff;padding:9px 10px;font-size:13px;font-family:inherit">
+            <option value="tab">Tab-Delimited (.tsv)</option>
+            <option value="comma">Comma-Separated (.csv)</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button onclick="bartExportTSV()" style="flex:1;padding:11px;background:#34d399;border:none;border-radius:8px;color:#080c17;font-size:12px;font-weight:700;font-family:inherit">&#8659; DOWNLOAD</button>
+          <button onclick="bartCopyTSV()" style="flex:1;padding:11px;background:rgba(52,211,153,0.12);border:1px solid #34d399;border-radius:8px;color:#34d399;font-size:12px;font-weight:700;font-family:inherit">&#128203; COPY</button>
+        </div>
+        <textarea id="bart-tsv-preview" readonly style="display:none;width:100%;height:180px;background:#080c17;border:1px solid #243a50;border-radius:8px;color:#38bdf8;padding:10px;font-size:10px;font-family:'Courier New',monospace;resize:vertical;box-sizing:border-box;margin-top:10px"></textarea>
+      </div>
+      <!-- Progress -->
+      <div id="bart-progress" style="display:none;background:#111825;border:1px solid #1a2a3a;border-radius:10px;padding:12px;margin-top:12px">
+        <div style="font-size:9px;color:#f59e0b;letter-spacing:1.5px;margin-bottom:8px" id="bart-progress-label">Processing...</div>
+        <div style="height:5px;background:#1a2a3a;border-radius:3px;overflow:hidden;margin-bottom:8px"><div id="bart-progress-bar" style="height:100%;background:linear-gradient(90deg,#f59e0b,#fb923c);width:0%;transition:width 0.3s;border-radius:3px"></div></div>
+        <div id="bart-progress-log" style="font-size:11px;color:#7a8fa6;line-height:1.8;max-height:100px;overflow-y:auto"></div>
+      </div>
+      <!-- Column mapping reference -->
+      <div style="background:#111825;border:1px solid #1a2a3a;border-radius:10px;padding:12px;margin-top:12px">
+        <div style="font-size:9px;color:#f59e0b;letter-spacing:2px;margin-bottom:8px">COLUMN MAPPING</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:10px">
+          <div style="color:#94a3b8"><span style="color:#f59e0b">AdjOE</span> &rarr; OrtG</div>
+          <div style="color:#94a3b8"><span style="color:#f59e0b">AdjDE</span> &rarr; DrtG</div>
+          <div style="color:#94a3b8"><span style="color:#f59e0b">Tempo</span> &rarr; Pace</div>
+          <div style="color:#94a3b8"><span style="color:#f59e0b">Exp</span> &rarr; Experience</div>
+          <div style="color:#94a3b8"><span style="color:#f59e0b">3PR</span> &rarr; 3PT Rate</div>
+          <div style="color:#94a3b8"><span style="color:#f59e0b">eFG%</span> &rarr; Eff FG%</div>
         </div>
       </div>
     </div>
@@ -876,7 +954,7 @@ function switchBetsSub(panel){
 function switchToolsSub(panel){
   currentToolsSubTab = panel;
   document.querySelectorAll('#tab-tools .sub-tab').forEach(function(b){b.classList.toggle('active',b.dataset.st===panel);});
-  ['calc-panel','stats-panel','keys-panel'].forEach(function(p){
+  ['calc-panel','stats-panel','bart-panel','keys-panel'].forEach(function(p){
     document.getElementById(p).style.display = p===panel?'block':'none';
   });
   if(panel==='keys-panel'){
@@ -884,6 +962,216 @@ function switchToolsSub(panel){
     var ci=document.getElementById('keys-panel-claude-input');
     if(oi && API_KEY){ oi.value=API_KEY; }
     if(ci && CLAUDE_KEY){ ci.value=CLAUDE_KEY; }
+  }
+}
+
+// ============================================================
+// BARTTORVIK IMPORT / EXPORT ENGINE
+// ============================================================
+var BART_CORS_PROXIES=['https://corsproxy.io/?','https://api.allorigins.win/raw?url='];
+
+function bartSwitchMethod(method){
+  ['paste','fetch','export'].forEach(function(m){
+    var el=document.getElementById('bart-method-'+m);
+    if(el) el.style.display=m===method?'block':'none';
+    var btn=document.getElementById('bart-tab-'+m);
+    if(btn){
+      btn.style.background=m===method?'rgba(245,158,11,0.15)':'transparent';
+      btn.style.borderColor=m===method?'#f59e0b':'#2a3a4a';
+      btn.style.color=m===method?'#f59e0b':'#667788';
+    }
+  });
+  document.getElementById('bart-progress').style.display='none';
+}
+function bartShowProgress(label){
+  var el=document.getElementById('bart-progress');
+  el.style.display='block';
+  document.getElementById('bart-progress-label').textContent=label||'Processing...';
+  document.getElementById('bart-progress-bar').style.width='5%';
+  document.getElementById('bart-progress-log').innerHTML='';
+}
+function bartSetProgress(pct,label){
+  document.getElementById('bart-progress-bar').style.width=pct+'%';
+  if(label) document.getElementById('bart-progress-label').textContent=label;
+}
+function bartLog(msg,type){
+  var el=document.getElementById('bart-progress-log');
+  var color=type==='ok'?'#34d399':type==='err'?'#f87171':type==='warn'?'#fb923c':'#7a8fa6';
+  el.innerHTML+='<div style="color:'+color+'">'+msg+'</div>';
+  el.scrollTop=el.scrollHeight;
+}
+function bartParsePasted(){
+  var raw=(document.getElementById('bart-paste-area').value||'').trim();
+  if(!raw){showToast('Paste Barttorvik page content first');return;}
+  bartShowProgress('Parsing pasted content...');
+  bartSetProgress(20);
+  var lines=raw.split('\n').map(function(l){return l.trim();}).filter(Boolean);
+  var teams=[];
+  var tabLines=lines.filter(function(l){return l.split('\t').length>=4;});
+  if(tabLines.length>5) teams=bartParseTabular(tabLines);
+  if(!teams.length) teams=bartParseFlexible(lines);
+  if(!teams.length){
+    bartLog('Could not auto-parse. Try copying the full page (Ctrl+A then Ctrl+C on barttorvik.com/trank.php)','err');
+    bartSetProgress(100,'Parse failed');
+    showToast('Parse failed — see tips above');
+    return;
+  }
+  bartSetProgress(70,'Parsed '+teams.length+' teams');
+  bartImportTeams(teams);
+}
+function bartParseTabular(lines){
+  var headerIdx=-1,hmap={};
+  for(var i=0;i<Math.min(15,lines.length);i++){
+    var parts=lines[i].split('\t');
+    var lc=parts.map(function(p){return p.toLowerCase().trim();});
+    if(lc.indexOf('team')>-1||lc.some(function(x){return x.match(/adjo|adjoe/i);})){
+      headerIdx=i;
+      lc.forEach(function(h,idx){
+        if(h.match(/^team/i)) hmap.team=idx;
+        else if(h.match(/adjo/i)) hmap.ortg=idx;
+        else if(h.match(/adjd/i)) hmap.drtg=idx;
+        else if(h.match(/tempo/i)) hmap.tempo=idx;
+        else if(h.match(/^exp/i)) hmap.exp=idx;
+        else if(h.match(/^3pr|three.*pt/i)) hmap.tpr=idx;
+        else if(h.match(/efg/i)) hmap.efg=idx;
+        else if(h.match(/tov/i)) hmap.tov=idx;
+        else if(h.match(/^or%|orpct/i)) hmap.orb=idx;
+        else if(h.match(/^ftr/i)) hmap.ftr=idx;
+      });
+      break;
+    }
+  }
+  if(headerIdx<0||Object.keys(hmap).length<2) return [];
+  var teams=[];
+  for(var i=headerIdx+1;i<lines.length;i++){
+    var parts=lines[i].split('\t');
+    if(parts.length<3) continue;
+    var name=(hmap.team!==undefined?parts[hmap.team]:parts[1]||'').trim();
+    var ortg=parseFloat(hmap.ortg!==undefined?parts[hmap.ortg]:parts[2]);
+    var drtg=parseFloat(hmap.drtg!==undefined?parts[hmap.drtg]:parts[3]);
+    if(!name||isNaN(ortg)||isNaN(drtg)||ortg<80||ortg>140) continue;
+    var t={team:name,ortg:ortg,drtg:drtg};
+    if(hmap.tempo!==undefined) t.tempo=parseFloat(parts[hmap.tempo])||69;
+    if(hmap.exp!==undefined) t.exp=parseFloat(parts[hmap.exp])||2.0;
+    if(hmap.tpr!==undefined) t.tpr=parseFloat(parts[hmap.tpr])||35;
+    if(hmap.efg!==undefined) t.efg=parseFloat(parts[hmap.efg])||0;
+    if(hmap.tov!==undefined) t.tov=parseFloat(parts[hmap.tov])||0;
+    if(hmap.orb!==undefined) t.orb=parseFloat(parts[hmap.orb])||0;
+    if(hmap.ftr!==undefined) t.ftr=parseFloat(parts[hmap.ftr])||0;
+    teams.push(t);
+  }
+  return teams;
+}
+function bartParseFlexible(lines){
+  var teams=[],seen={};
+  lines.forEach(function(line){
+    var parts=line.split(/[\t,;]+/).map(function(p){return p.trim();});
+    if(parts.length<3) return;
+    var name=parts[0];
+    var ortg=parseFloat(parts[1]);
+    var drtg=parseFloat(parts[2]);
+    if(!name||isNaN(ortg)||isNaN(drtg)||ortg<85||ortg>135||drtg<85||drtg>130) return;
+    if(seen[name]) return;
+    seen[name]=true;
+    teams.push({team:name,ortg:ortg,drtg:drtg,tempo:parseFloat(parts[3])||69,exp:parseFloat(parts[4])||2.0,tpr:parseFloat(parts[7])||35});
+  });
+  return teams;
+}
+function bartImportTeams(teams){
+  var imported=[],errors=[];
+  teams.forEach(function(t){
+    if(!t.team||!t.ortg||!t.drtg){errors.push(t.team||'?');return;}
+    importSingleTeam(t.team,t.ortg,t.drtg,t.tempo||69,t.exp||2.0,t.ats_w||null,t.ats_l||null,t.tpr||35);
+    if(teamStats[t.team]){
+      if(t.efg) teamStats[t.team].efg=t.efg;
+      if(t.tov) teamStats[t.team].tov=t.tov;
+      if(t.orb) teamStats[t.team].orb=t.orb;
+      if(t.ftr) teamStats[t.team].ftr=t.ftr;
+    }
+    imported.push(t.team);
+    bartLog('&#10003; '+t.team+' (OrtG:'+t.ortg.toFixed(1)+' DrtG:'+t.drtg.toFixed(1)+')','ok');
+  });
+  saveTeamStats();
+  bartSetProgress(100,'Done: '+imported.length+' teams imported');
+  if(errors.length) bartLog('Skipped: '+errors.join(', '),'warn');
+  showToast('&#10003; Imported '+imported.length+' teams from Barttorvik');
+}
+async function bartFetchLive(){
+  var btn=document.getElementById('bart-fetch-btn');
+  btn.disabled=true;btn.textContent='&#9203; Fetching...';
+  bartShowProgress('Fetching from Barttorvik via CORS proxy...');
+  var year=(document.getElementById('bart-year')||{}).value||'2026';
+  var url='https://barttorvik.com/getteamdata.php?year='+year+'&conlimit=All&top=0&start='+(parseInt(year)-1)+'1101&end='+year+'0401&type=All';
+  var data=null;
+  for(var i=0;i<BART_CORS_PROXIES.length;i++){
+    bartLog('Trying proxy '+(i+1)+'...','');
+    bartSetProgress(20+i*25);
+    try{
+      var resp=await fetch(BART_CORS_PROXIES[i]+encodeURIComponent(url),{signal:AbortSignal.timeout(10000)});
+      if(resp.ok){
+        var text=await resp.text();
+        try{data=JSON.parse(text);}catch(e){}
+        if(data&&Array.isArray(data)&&data.length>10){bartLog('&#10003; Data received via proxy '+(i+1),'ok');break;}
+        data=null;
+      }
+    }catch(e){bartLog('&#10007; Proxy '+(i+1)+' failed: '+(e.message||'timeout'),'warn');}
+  }
+  btn.disabled=false;btn.textContent='&#127758; FETCH LIVE DATA';
+  if(!data){bartLog('All proxies failed. Use Paste method.','err');bartSetProgress(100,'Failed');return;}
+  bartSetProgress(80,'Parsing...');
+  var teams=[];
+  data.forEach(function(row){
+    if(!Array.isArray(row)||row.length<5) return;
+    var t={team:row[0],ortg:parseFloat(row[3]),drtg:parseFloat(row[4]),tempo:parseFloat(row[5])||69,exp:parseFloat(row[9])||2.0,tpr:parseFloat(row[10])||35,efg:parseFloat(row[11])||0,tov:parseFloat(row[12])||0,orb:parseFloat(row[13])||0,ftr:parseFloat(row[14])||0};
+    if(!t.team||isNaN(t.ortg)||isNaN(t.drtg)) return;
+    teams.push(t);
+  });
+  bartLog('&#10003; Fetched '+teams.length+' teams','ok');
+  bartImportTeams(teams);
+}
+function bartBuildTSV(delim){
+  delim=delim||'\t';
+  var all=getAllTeamNames();
+  var header=['Team','OrtG','DrtG','Tempo','Exp','3PR','eFG%','TOV%','OR%','FTR','Net'].join(delim);
+  var rows=[header];
+  all.slice().sort(function(a,b){
+    var sa=getTeamStats(a),sb=getTeamStats(b);
+    return ((sb?sb.ortg-sb.drtg:0)-(sa?sa.ortg-sa.drtg:0));
+  }).forEach(function(name){
+    var s=getTeamStats(name);
+    if(!s) return;
+    rows.push([name,s.ortg.toFixed(1),s.drtg.toFixed(1),(s.pace||69).toFixed(1),(s.exp||2.0).toFixed(2),(s.tpr||35).toFixed(1),(s.efg||0).toFixed(1),(s.tov||0).toFixed(1),(s.orb||0).toFixed(1),(s.ftr||0).toFixed(1),(s.ortg-s.drtg).toFixed(1)].join(delim));
+  });
+  return rows.join('\n');
+}
+function bartExportTSV(){
+  var fmt=(document.getElementById('bart-export-format')||{}).value||'tab';
+  var delim=fmt==='comma'?',':'\t';
+  var ext=fmt==='comma'?'.csv':'.tsv';
+  var tsv=bartBuildTSV(delim);
+  var preview=document.getElementById('bart-tsv-preview');
+  if(preview){preview.value=tsv;preview.style.display='block';}
+  var blob=new Blob([tsv],{type:'text/tab-separated-values'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='leonards-locks-stats-'+new Date().toISOString().slice(0,10)+ext;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('&#8659; Downloaded ('+getAllTeamNames().length+' teams)');
+}
+async function bartCopyTSV(){
+  var fmt=(document.getElementById('bart-export-format')||{}).value||'tab';
+  var tsv=bartBuildTSV(fmt==='comma'?',':'\t');
+  var preview=document.getElementById('bart-tsv-preview');
+  if(preview){preview.value=tsv;preview.style.display='block';}
+  try{
+    await navigator.clipboard.writeText(tsv);
+    showToast('&#128203; TSV copied to clipboard');
+  }catch(e){
+    var ta=document.createElement('textarea');
+    ta.value=tsv;ta.style.position='fixed';ta.style.opacity='0';
+    document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
+    showToast('&#128203; TSV copied to clipboard');
   }
 }
 
