@@ -1105,22 +1105,26 @@ function bartParseCSVNoHeader(lines){
   return teams;
 }
 
-// SECONDARY: CSV that happens to have a header row — detect column positions dynamically
+// CSV with header row — log all headers so we can confirm matches, then map columns
 function bartParseCSVWithHeader(lines){
   var header=lines[0].toLowerCase().split(',').map(function(s){return s.trim();});
+  // Debug: log every header column so we can see exact names
+  bartLog('Header row ('+header.length+' cols):','warn');
+  header.forEach(function(h,i){bartLog('  ['+i+']='+h,'');});
   var hmap={};
   header.forEach(function(h,i){
-    if(h.match(/^team/))            hmap.team=i;
-    else if(h.match(/adjoe|adjo\b/)) hmap.ortg=i;
-    else if(h.match(/adjde|adjd\b/)) hmap.drtg=i;
-    else if(h.match(/tempo/))        hmap.tempo=i;
-    else if(h.match(/^exp/))         hmap.exp=i;
-    else if(h.match(/efg/))          hmap.efg=i;
-    else if(h.match(/dto|tov/))      hmap.tov=i;
-    else if(h.match(/^or[b%]/))      hmap.orb=i;
-    else if(h.match(/ftr/))          hmap.ftr=i;
-    else if(h.match(/3pr|three/))    hmap.tpr=i;
+    if(h.match(/^team/))                      hmap.team=i;
+    else if(h.match(/adjoe|adjo[^d]|^adjo$/)) hmap.ortg=i;
+    else if(h.match(/adjde|adjd[^o]|^adjd$/)) hmap.drtg=i;
+    else if(h.match(/tempo|adj_t|adjtempo/))  hmap.tempo=i;
+    else if(h.match(/^exp/))                  hmap.exp=i;
+    else if(h.match(/efg/))                   hmap.efg=i;
+    else if(h.match(/dto|tov%|tov_|^tov$/))  hmap.tov=i;
+    else if(h.match(/^or[b%_]|oreb/))         hmap.orb=i;
+    else if(h.match(/^ftr|ftrate/))           hmap.ftr=i;
+    else if(h.match(/3pr|three|^tpr/))        hmap.tpr=i;
   });
+  bartLog('Mapped: team='+hmap.team+' ortg='+hmap.ortg+' drtg='+hmap.drtg+' tempo='+hmap.tempo+' efg='+hmap.efg+' tov='+hmap.tov+' orb='+hmap.orb+' ftr='+hmap.ftr,'warn');
   if(hmap.ortg===undefined||hmap.drtg===undefined){
     bartLog('Header found but missing adjoe/adjde columns','err');
     return [];
