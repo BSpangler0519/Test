@@ -614,26 +614,17 @@ button{cursor:pointer}
           <button onclick="bartParsePasted()" style="flex:2;padding:11px;background:#818cf8;border:none;border-radius:8px;color:#080c17;font-size:12px;font-weight:700;font-family:inherit">&#9889; PARSE &amp; IMPORT</button>
           <button onclick="document.getElementById('bart-paste-area').value=''" style="flex:1;padding:11px;background:transparent;border:1px solid #445566;border-radius:8px;color:#667788;font-size:11px;font-weight:700;font-family:inherit">CLEAR</button>
         </div>
-        <!-- STEP 2: Four Factors CSV (efg, tov, orb, ftr) -->
-        <div style="background:#0f1a0f;border:1px solid #2a5a2a;border-radius:10px;padding:12px;margin-bottom:10px">
-          <div style="font-size:9px;color:#34d399;letter-spacing:1.5px;margin-bottom:6px">STEP 2 — FOUR FACTORS (eFG%, TOV%, ORB%, FTR) — OPTIONAL</div>
-          <div style="font-size:11px;color:#94a3b8;line-height:1.9">
-            Open in browser &rarr; Ctrl+A &rarr; Ctrl+C &rarr; paste below:<br/>
-            <a href="https://barttorvik.com/2026_four_factors.csv" target="_blank" style="color:#34d399;font-weight:700;word-break:break-all">barttorvik.com/2026_four_factors.csv</a><br/>
-            <span style="font-size:10px;color:#445566">If that URL doesn't work, try: barttorvik.com/teamstats.php?year=2026 and use the CSV download button on that page.</span>
-          </div>
-        </div>
-        <textarea id="bart-paste-area2" placeholder="Paste four factors CSV here (optional — adds eFG%, TOV%, ORB%, FTR)..." style="width:100%;height:100px;background:#080c17;border:1px solid #2a5a2a;border-radius:10px;color:#e0e6f0;padding:12px;font-size:11px;font-family:'Courier New',monospace;resize:vertical;box-sizing:border-box;outline:none"></textarea>
-        <div style="display:flex;gap:8px;margin-top:8px">
-          <button onclick="bartParseFourFactors()" style="flex:2;padding:11px;background:#34d399;border:none;border-radius:8px;color:#080c17;font-size:12px;font-weight:700;font-family:inherit">&#9889; IMPORT FOUR FACTORS</button>
-          <button onclick="document.getElementById('bart-paste-area2').value=''" style="flex:1;padding:11px;background:transparent;border:1px solid #445566;border-radius:8px;color:#667788;font-size:11px;font-weight:700;font-family:inherit">CLEAR</button>
+        <!-- Four factors note -->
+        <div style="background:#111825;border:1px solid #1a2a3a;border-radius:10px;padding:12px;margin-top:4px">
+          <div style="font-size:9px;color:#34d399;letter-spacing:1.5px;margin-bottom:6px">&#9432; FOUR FACTORS (eFG%, TOV%, ORB%, FTR)</div>
+          <div style="font-size:11px;color:#7a8fa6;line-height:1.8">Barttorvik does not offer a downloadable four factors file. Use the <strong style="color:#38bdf8">LIVE FETCH</strong> tab instead — it pulls all stats including four factors directly from Barttorvik's data API in one step.</div>
         </div>
       </div>
       <!-- METHOD B: LIVE FETCH -->
       <div id="bart-method-fetch" style="display:none">
         <div style="background:#0f1629;border:1px solid #3b4fd8;border-radius:10px;padding:12px;margin-bottom:12px">
-          <div style="font-size:9px;color:#818cf8;letter-spacing:1.5px;margin-bottom:8px">CORS PROXY FETCH</div>
-          <div style="font-size:11px;color:#94a3b8;line-height:1.8">Fetches Barttorvik data via public CORS proxy. May be rate-limited. Use Paste method if this fails.</div>
+          <div style="font-size:9px;color:#818cf8;letter-spacing:1.5px;margin-bottom:8px">RECOMMENDED — ALL STATS IN ONE STEP</div>
+          <div style="font-size:11px;color:#94a3b8;line-height:1.8">Fetches <strong style="color:#fff">adjOE, adjDE, Tempo, eFG%, TOV%, ORB%, FTR</strong> all at once directly from Barttorvik's data API via CORS proxy. No copy-paste needed. Use Paste method if this fails due to rate limiting.</div>
         </div>
         <div style="margin-bottom:10px">
           <label style="font-size:9px;color:#8aa0b8;letter-spacing:1px;display:block;margin-bottom:4px">SEASON YEAR</label>
