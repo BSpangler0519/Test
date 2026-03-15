@@ -725,6 +725,7 @@ button{cursor:pointer}
         <button onclick="saveKeysFromPanel()" style="width:100%;padding:11px;background:#f59e0b;border:none;border-radius:8px;color:#080c17;font-size:13px;font-weight:700;font-family:inherit;margin-top:4px">&#10003; SAVE KEYS</button>
         <div id="keys-panel-saved-msg" style="font-size:10px;color:#38bdf8;margin-top:6px;text-align:center;display:none">&#10003; Keys saved!</div>
         <button onclick="testOddsApiKey()" style="width:100%;padding:9px;background:transparent;border:1px solid #334155;border-radius:8px;color:#94a3b8;font-size:11px;font-weight:700;font-family:inherit;margin-top:8px">&#128270; TEST API KEY CONNECTION</button>
+        <button onclick="checkActiveSports()" style="width:100%;padding:9px;background:transparent;border:1px solid #334155;border-radius:8px;color:#94a3b8;font-size:11px;font-weight:700;font-family:inherit;margin-top:6px">&#127944; CHECK ACTIVE NCAAB SPORTS</button>
         <div id="api-test-result" style="font-size:10px;margin-top:6px;padding:8px;border-radius:6px;display:none;word-break:break-all;line-height:1.6"></div>
         <div style="margin-top:10px;font-size:10px;color:#445566;line-height:1.6;text-align:center">Keys are stored only on this device. Never shared with anyone.</div>
       </div>
@@ -948,6 +949,25 @@ function saveApiKey(){
   launchApp();
 }
 function skipSetup(){ launchApp(); }
+
+async function checkActiveSports(){
+  var key = sanitizeApiKey((document.getElementById('keys-panel-odds-input')||{}).value||'') || API_KEY;
+  var el = document.getElementById('api-test-result');
+  if(!el) return;
+  if(!key){ el.style.display='block'; el.style.color='#f87171'; el.textContent='No API key.'; return; }
+  el.style.display='block'; el.style.color='#f59e0b'; el.textContent='Checking active sports...';
+  try{
+    var r = await fetch('https://api.the-odds-api.com/v4/sports?apiKey='+key+'&all=false',{mode:'cors'});
+    var sports = await r.json();
+    if(!Array.isArray(sports)){ el.style.color='#f87171'; el.textContent='Error: '+JSON.stringify(sports).slice(0,200); return; }
+    var ncaab = sports.filter(function(s){ return s.group==='American Basketball' || s.key.indexOf('ncaab')>-1 || s.key.indexOf('college_basketball')>-1; });
+    el.style.color='#4ade80';
+    el.textContent = 'Active NCAAB-related sports ('+ncaab.length+'):\n'+ncaab.map(function(s){ return s.key+' - '+s.title+(s.active?' [ACTIVE]':''); }).join('\n');
+    if(!ncaab.length) el.textContent = 'No active NCAAB sports found right now.\nAll sports: '+sports.map(function(s){return s.key;}).join(', ');
+  }catch(e){
+    el.style.color='#f87171'; el.textContent='Error: '+e.message;
+  }
+}
 
 async function testOddsApiKey(){
   var keyInput = document.getElementById('keys-panel-odds-input');
@@ -1660,18 +1680,35 @@ async function fetchOdds(){
     var params='odds?regions=us&markets=h2h,spreads,totals&oddsFormat=american&apiKey='+API_KEY;
     var base='https://api.the-odds-api.com/v4/sports/';
 
-    var results=await Promise.allSettled([
-      safeFetch(base+'basketball_ncaab/'+params),
-      safeFetch(base+'basketball_ncaab_championship/'+params)
-    ]);
-    // Surface any errors from the primary NCAAB endpoint
-    if(results[0].status==='rejected'){
-      throw new Error(results[0].reason.message||results[0].reason);
+    // Fetch all active NCAAB sport keys
+    var sportKeys=[
+      'basketball_ncaab',
+      'basketball_ncaab_championship'
+    ];
+    var allResults=await Promise.allSettled(
+      sportKeys.map(function(key){ return safeFetch(base+key+'/'+params); })
+    );
+
+    // Check if primary endpoint failed
+    if(allResults[0].status==='rejected'){
+      throw new Error(allResults[0].reason.message||allResults[0].reason);
     }
-    var d1=(results[0].status==='fulfilled'&&Array.isArray(results[0].value))?results[0].value:[];
-    var d2=(results[1].status==='fulfilled'&&Array.isArray(results[1].value))?results[1].value:[];
-    d1.forEach(function(g){g._league='ncaab';}); d2.forEach(function(g){g._league='tournament';});
-    var combined=d1.concat(d2);
+
+    var combined=[];
+    allResults.forEach(function(res,idx){
+      if(res.status==='fulfilled'&&Array.isArray(res.value)){
+        var league=sportKeys[idx]==='basketball_ncaab_championship'?'tournament':'ncaab';
+        res.value.forEach(function(g){g._league=league;});
+        combined=combined.concat(res.value);
+      }
+    });
+
+    // Deduplicate by game id
+    var seen={};
+    combined=combined.filter(function(g){
+      if(seen[g.id]) return false;
+      seen[g.id]=true; return true;
+    });
     combined.sort(function(a,b){return new Date(a.commence_time)-new Date(b.commence_time);});
 
     saveOddsSnapshot();
@@ -1684,7 +1721,9 @@ async function fetchOdds(){
     // Debug output
     var dbg=document.getElementById('odds-debug');
     if(dbg){
-      var info='API returned: '+combined.length+' total games ('+d1.length+' NCAAB + '+d2.length+' tournament)\n';
+      var byLeague={ncaab:0,tournament:0};
+      combined.forEach(function(g){byLeague[g._league]=(byLeague[g._league]||0)+1;});
+      var info='API returned: '+combined.length+' total games ('+byLeague.ncaab+' NCAAB + '+byLeague.tournament+' tournament)\n';
       info+='Transformed: '+allGamesData.length+' games with valid odds\n';
       if(combined.length>0){
         info+='First game: '+combined[0].away_team+' @ '+combined[0].home_team+'\n';
@@ -2894,14 +2933,20 @@ async function generatePicks(){
       try{
         var params='odds?regions=us&markets=h2h,spreads,totals&oddsFormat=american&apiKey='+API_KEY;
         var base='https://api.the-odds-api.com/v4/sports/';
-        var results=await Promise.allSettled([
-          safeFetchPicks(base+'basketball_ncaab/'+params),
-          safeFetchPicks(base+'basketball_ncaab_championship/'+params)
-        ]);
-        var d1=(results[0].status==='fulfilled'&&Array.isArray(results[0].value))?results[0].value:[];
-        var d2=(results[1].status==='fulfilled'&&Array.isArray(results[1].value))?results[1].value:[];
-        d1.forEach(function(g){g._league='ncaab';}); d2.forEach(function(g){g._league='tournament';});
-        var combined=d1.concat(d2);
+        var sportKeys=['basketball_ncaab','basketball_ncaab_championship'];
+        var results=await Promise.allSettled(
+          sportKeys.map(function(key){ return safeFetchPicks(base+key+'/'+params); })
+        );
+        var combined=[];
+        var seen={};
+        results.forEach(function(res,idx){
+          if(res.status==='fulfilled'&&Array.isArray(res.value)){
+            var league=sportKeys[idx]==='basketball_ncaab_championship'?'tournament':'ncaab';
+            res.value.forEach(function(g){
+              if(!seen[g.id]){ seen[g.id]=true; g._league=league; combined.push(g); }
+            });
+          }
+        });
         oddsCache={data:combined,timestamp:Date.now()};
         allGamesData=combined.map(function(g){return transformGame(g,selectedBookmaker);}).filter(Boolean);
       } catch(e){renderPicksNoData();return;}
