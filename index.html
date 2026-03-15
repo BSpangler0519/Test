@@ -953,8 +953,7 @@ async function testOddsApiKey(){
       var count=Array.isArray(parsed)?parsed.length:0;
       resultEl.style.background='rgba(34,197,94,0.15)';
       resultEl.style.color='#4ade80';
-      resultEl.textContent='✓ Connected! '+count+' NCAAB games found. Key is valid.
-Requests remaining: '+(r.headers.get('x-requests-remaining')||'unknown');
+      resultEl.textContent='✓ Connected! '+count+' NCAAB games found. Key is valid. Requests remaining: '+(r.headers.get('x-requests-remaining')||'unknown');
     } else {
       resultEl.style.background='rgba(239,68,68,0.15)';
       resultEl.style.color='#f87171';
@@ -964,12 +963,7 @@ Requests remaining: '+(r.headers.get('x-requests-remaining')||'unknown');
   } catch(e){
     resultEl.style.background='rgba(239,68,68,0.15)';
     resultEl.style.color='#f87171';
-    resultEl.textContent='✗ Network error: '+e.message+'
-
-This usually means:
-- No internet connection
-- Browser blocking the request (check console)
-- Invalid URL';
+    resultEl.textContent='✗ Network error: '+e.message+' — Check: internet connection, content blockers, or browser console for details.';
   }
 }
 function showSetup(){
@@ -1628,21 +1622,21 @@ async function fetchOdds(){
   document.getElementById('odds-error').style.display='none';
   document.getElementById('odds-filters').style.display='none';
 
+  var safeFetch=function(url){
+    // Log the URL for debugging (show in debug panel)
+    var dbgEl=document.getElementById('odds-debug');
+    if(dbgEl){ dbgEl.style.display='block'; dbgEl.textContent='Fetching: '+url.replace(API_KEY,'[KEY]')+'\n'; }
+    return fetch(url, {mode:'cors'}).then(function(r){
+      if(r.ok) return r.json();
+      return r.json().catch(function(){return {message:'HTTP '+r.status};}).then(function(err){
+        throw new Error('API '+r.status+': '+(err.message||err.error_code||JSON.stringify(err)));
+      });
+    });
+  };
+
   try{
     var params='odds?regions=us&markets=h2h,spreads,totals&oddsFormat=american&apiKey='+API_KEY;
     var base='https://api.the-odds-api.com/v4/sports/';
-
-    function safeFetch(url){
-      // Log the URL for debugging (show in debug panel)
-      var dbgEl=document.getElementById('odds-debug');
-      if(dbgEl){ dbgEl.style.display='block'; dbgEl.textContent='Fetching: '+url.replace(API_KEY,'[KEY]')+'\n'; }
-      return fetch(url, {mode:'cors'}).then(function(r){
-        if(r.ok) return r.json();
-        return r.json().catch(function(){return {message:'HTTP '+r.status};}).then(function(err){
-          throw new Error('API '+r.status+': '+(err.message||err.error_code||JSON.stringify(err)));
-        });
-      });
-    }
 
     var results=await Promise.allSettled([
       safeFetch(base+'basketball_ncaab/'+params),
@@ -2824,17 +2818,17 @@ async function generatePicks(){
       allGamesData=cached.map(function(g){return transformGame(g,selectedBookmaker);}).filter(Boolean);
     } else {
       // Only fetch if no cache available
+      var safeFetchPicks=function(url){
+        return fetch(url,{mode:'cors'}).then(function(r){
+          if(r.ok) return r.json();
+          return r.json().catch(function(){return {message:'HTTP '+r.status};}).then(function(err){
+            throw new Error('API error '+r.status+': '+(err.message||JSON.stringify(err)));
+          });
+        });
+      };
       try{
         var params='odds?regions=us&markets=h2h,spreads,totals&oddsFormat=american&apiKey='+API_KEY;
         var base='https://api.the-odds-api.com/v4/sports/';
-        function safeFetchPicks(url){
-          return fetch(url).then(function(r){
-            if(r.ok) return r.json();
-            return r.json().catch(function(){return {message:'HTTP '+r.status};}).then(function(err){
-              throw new Error('API error '+r.status+': '+(err.message||JSON.stringify(err)));
-            });
-          });
-        }
         var results=await Promise.allSettled([
           safeFetchPicks(base+'basketball_ncaab/'+params),
           safeFetchPicks(base+'basketball_ncaab_championship/'+params)
