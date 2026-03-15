@@ -523,6 +523,8 @@ button{cursor:pointer}
 
     <!-- STATS PANEL -->
     <div id="stats-panel" style="display:none">
+      <button onclick="quickBartRefresh()" style="width:100%;padding:9px;background:rgba(56,189,248,0.1);border:1px solid #38bdf8;border-radius:8px;color:#38bdf8;font-size:11px;font-weight:700;font-family:inherit;margin-bottom:10px">&#127758; REFRESH STATS FROM BARTTORVIK</button>
+      <div id="bart-quick-status" style="font-size:10px;color:#38bdf8;text-align:center;margin:-6px 0 8px;display:none"></div>
       <div style="display:flex;gap:8px;margin-bottom:14px">
         <button id="stats-mode-team" onclick="setStatsMode('team')" style="flex:1;padding:9px;background:rgba(245,158,11,0.2);border:1px solid #f59e0b;border-radius:8px;color:#f59e0b;font-size:11px;font-weight:700;letter-spacing:1px">TEAM LOOKUP</button>
         <button id="stats-mode-matchup" onclick="setStatsMode('matchup')" style="flex:1;padding:9px;background:transparent;border:1px solid #2a3a4a;border-radius:8px;color:#667788;font-size:11px;font-weight:700;letter-spacing:1px">MATCHUP</button>
@@ -1381,6 +1383,67 @@ function bartImportTeams(teams){
   showToast('&#10003; Imported '+imported.length+' teams from Barttorvik');
 }
 
+
+async function quickBartRefresh(){
+  var statusEl = document.getElementById('bart-quick-status');
+  function setStatus(msg, color){
+    if(!statusEl) return;
+    statusEl.style.display = 'block';
+    statusEl.style.color = color || '#38bdf8';
+    statusEl.textContent = msg;
+  }
+  setStatus('Fetching from Barttorvik...');
+  var year = '2026';
+  var url = 'https://barttorvik.com/getteamdata.php?year='+year+'&conlimit=All&top=0&start='+(parseInt(year)-1)+'1101&end='+year+'0401&type=All';
+  var data = null;
+  for(var i = 0; i < BART_CORS_PROXIES.length; i++){
+    try{
+      var resp = await fetch(BART_CORS_PROXIES[i]+encodeURIComponent(url),{signal:AbortSignal.timeout(12000)});
+      if(resp.ok){ data = await resp.json(); break; }
+    }catch(e){ /* try next proxy */ }
+  }
+  if(!data || !Array.isArray(data)){
+    setStatus('Could not reach Barttorvik. Check connection or use TOOLS → BARTTORVIK to paste data manually.', '#f87171');
+    return;
+  }
+  // Parse using existing bartParseTeamData if available
+  var parsed = typeof bartParseTeamData === 'function' ? bartParseTeamData(data) : null;
+  if(!parsed){
+    // Fallback: parse raw array format [team, conf, adj_oe, adj_de, barthag, ...]
+    parsed = {};
+    data.forEach(function(row){
+      if(!Array.isArray(row) || !row[0]) return;
+      var name = row[0];
+      parsed[name] = {
+        conf: row[1]||'', ortg: +row[2]||0, drtg: +row[3]||0,
+        barthag: +row[4]||0, efg: +(row[5]*100).toFixed(1)||0,
+        tov: +(row[6]*100).toFixed(1)||0, orb: +(row[7]*100).toFixed(1)||0,
+        ftr: +(row[8]*100).toFixed(1)||0, pace: +row[9]||0,
+        wab: +row[13]||0, record: row[27]||(row[10]+'-'+row[11]),
+        sos: +row[14]||0, ppg: +row[12]||0,
+        exp: +row[15]||0, tpr: +(row[16]*100).toFixed(0)||35,
+        ncsos: +row[18]||0
+      };
+    });
+  }
+  var count = Object.keys(parsed).length;
+  if(count < 10){
+    setStatus('Parse failed — got '+count+' teams. Use TOOLS → BARTTORVIK for manual import.', '#f87171');
+    return;
+  }
+  // Merge with existing custom stats
+  var existing = JSON.parse(localStorage.getItem('teamStatsCustom')||'{}');
+  Object.keys(parsed).forEach(function(k){ existing[k] = Object.assign(existing[k]||{}, parsed[k]); });
+  localStorage.setItem('teamStatsCustom', JSON.stringify(existing));
+  // Reload into memory
+  teamStats = existing;
+  TEAM_STATS_DEFAULT = null; // force re-merge on next _ensureStats
+  _ensureStats();
+  setStatus('✓ Updated '+count+' teams from Barttorvik!', '#4ade80');
+  // Refresh bubble board if visible
+  if(typeof renderBubbleBoard === 'function') renderBubbleBoard();
+  setTimeout(function(){ if(statusEl) statusEl.style.display='none'; }, 4000);
+}
 
 async function bartFetchLive(){
   var btn=document.getElementById('bart-fetch-btn');
@@ -2343,26 +2406,44 @@ function runMatchup(){
   var statFav=winProb1>=winProb2?matchupTeam1:matchupTeam2;
   var statFavProb=Math.max(winProb1,winProb2).toFixed(0);
 
+  // Build header info block (record, conf, proj record)
+  var hdr1='<div style="font-size:10px;color:#7a8fa6;margin-top:2px">'+(s1.conf||'')+(s1.record?' &middot; '+s1.record:'')+(s1.con_rec?' ('+s1.con_rec+' conf)':'')+'</div>'
+    +(s1.proj_w!=null?'<div style="font-size:9px;color:#556677;margin-top:1px">Proj: '+Math.round(s1.proj_w)+'-'+Math.round(s1.proj_l)+'</div>':'');
+  var hdr2='<div style="font-size:10px;color:#7a8fa6;margin-top:2px">'+(s2.conf||'')+(s2.record?' &middot; '+s2.record:'')+(s2.con_rec?' ('+s2.con_rec+' conf)':'')+'</div>'
+    +(s2.proj_w!=null?'<div style="font-size:9px;color:#556677;margin-top:1px">Proj: '+Math.round(s2.proj_w)+'-'+Math.round(s2.proj_l)+'</div>':'');
+
   var metrics=[
+    // ── CORE RATINGS ──
+    {label:'OFF RATING',key:'ortg',t1:s1.ortg,t2:s2.ortg,higherBetter:true,desc:'Points scored per 100 possessions',section:'EFFICIENCY'},
+    {label:'DEF RATING',key:'drtg',t1:s1.drtg,t2:s2.drtg,higherBetter:false,desc:'Points allowed per 100 possessions'},
+    {label:'NET RATING',key:'net',t1:net1,t2:net2,higherBetter:true,desc:'Offensive minus defensive efficiency'},
+    {label:'T-RANK',key:'barthag',t1:s1.barthag?+(s1.barthag*100).toFixed(2):null,t2:s2.barthag?+(s2.barthag*100).toFixed(2):null,higherBetter:true,desc:'Barttorvik win% vs avg D1 opponent (×100)'},
     {label:'PPG',key:'ppg',t1:s1.ppg,t2:s2.ppg,higherBetter:true,desc:'Points scored per game'},
-    {label:'OFF RATING',key:'ortg',t1:s1.ortg,t2:s2.ortg,higherBetter:true,desc:'Points per 100 possessions'},
-    {label:'DEF RATING',key:'drtg',t1:s1.drtg,t2:s2.drtg,higherBetter:false,desc:'Points allowed per 100'},
-    {label:'NET RATING',key:'net',t1:net1,t2:net2,higherBetter:true,desc:'Off minus Def rating'},
-    {label:'T-RANK',key:'barthag',t1:s1.barthag?+(s1.barthag*100).toFixed(1):null,t2:s2.barthag?+(s2.barthag*100).toFixed(1):null,higherBetter:true,desc:'Barthag: win% vs avg D1 team (×100)',fmt:'pct'},
-    {label:'SOS',key:'sos',t1:s1.sos,t2:s2.sos,higherBetter:true,desc:'Strength of schedule (higher=harder)'},
-    {label:'ELITE SOS',key:'elite_sos',t1:s1.elite_sos!=null?+(s1.elite_sos*100).toFixed(0):null,t2:s2.elite_sos!=null?+(s2.elite_sos*100).toFixed(0):null,higherBetter:true,desc:'% of games vs top-50 teams',fmt:'pct'},
-    {label:'WAB',key:'wab',t1:s1.wab,t2:s2.wab,higherBetter:true,desc:'Wins Above Bubble — NCAA selection metric'},
-    {label:'CONF W%',key:'conf_wpct',t1:s1.conf_wpct!=null?+(s1.conf_wpct*100).toFixed(0):null,t2:s2.conf_wpct!=null?+(s2.conf_wpct*100).toFixed(0):null,higherBetter:true,desc:'Conference win % — recent form signal',fmt:'pct'},
-    {label:'BIG GAME BART',key:'qual_barthag',t1:s1.qual_barthag?+(s1.qual_barthag*100).toFixed(1):null,t2:s2.qual_barthag?+(s2.qual_barthag*100).toFixed(1):null,higherBetter:true,desc:'Barthag in quality games only — March signal',fmt:'pct'},
-    {label:'CONF OE',key:'con_oe',t1:s1.con_oe,t2:s2.con_oe,higherBetter:true,desc:'Off efficiency in conference games only'},
-    {label:'CONF DE',key:'con_de',t1:s1.con_de,t2:s2.con_de,higherBetter:false,desc:'Def efficiency in conference games only'},
-    {label:'EFF FG%',key:'efg',t1:s1.efg,t2:s2.efg,higherBetter:true,desc:'Shooting efficiency'},
-    {label:'TURNOVER RATE',key:'tov',t1:s1.tov,t2:s2.tov,higherBetter:false,desc:'Lower = takes care of ball'},
-    {label:'OFF REB RATE',key:'orb',t1:s1.orb,t2:s2.orb,higherBetter:true,desc:'Second chance opportunities'},
-    {label:'FT RATE',key:'ftr',t1:s1.ftr,t2:s2.ftr,higherBetter:true,desc:'Free throw attempts per FGA'},
-    {label:'PACE',key:'pace',t1:s1.pace,t2:s2.pace,higherBetter:true,desc:'Possessions per 40 min'},
-    {label:'EXPERIENCE',key:'exp',t1:s1.exp||0,t2:s2.exp||0,higherBetter:true,desc:'Roster continuity (0-4)'},
-    {label:'3PT RATE',key:'tpr',t1:s1.tpr||35,t2:s2.tpr||35,higherBetter:false,desc:'High 3pt rate = more variance'},
+    // ── BIG GAME ──
+    {label:'BIG GAME BART',key:'qual_barthag',t1:s1.qual_barthag?+(s1.qual_barthag*100).toFixed(2):null,t2:s2.qual_barthag?+(s2.qual_barthag*100).toFixed(2):null,higherBetter:true,desc:'Barthag in quality games only — best March predictor',section:'BIG GAME'},
+    {label:'QUAL GAMES',key:'qual_games',t1:s1.qual_games,t2:s2.qual_games,higherBetter:true,desc:'# of quality games backing the big-game Barthag'},
+    // ── CONFERENCE ──
+    {label:'CONF W%',key:'conf_wpct',t1:s1.conf_wpct!=null?+(s1.conf_wpct*100).toFixed(1):null,t2:s2.conf_wpct!=null?+(s2.conf_wpct*100).toFixed(1):null,higherBetter:true,desc:'Conference win percentage',section:'CONFERENCE'},
+    {label:'CONF OFF EFF',key:'con_oe',t1:s1.con_oe,t2:s2.con_oe,higherBetter:true,desc:'Offensive efficiency in conference games only'},
+    {label:'CONF DEF EFF',key:'con_de',t1:s1.con_de,t2:s2.con_de,higherBetter:false,desc:'Defensive efficiency in conference games only'},
+    {label:'CONF OE RATIO',key:'conoe',t1:s1.conoe!=null?+(s1.conoe).toFixed(3):null,t2:s2.conoe!=null?+(s2.conoe).toFixed(3):null,higherBetter:true,desc:'Conf off efficiency vs national average (ratio >1 = above avg)'},
+    {label:'CONF DE RATIO',key:'conde',t1:s1.conde!=null?+(s1.conde).toFixed(3):null,t2:s2.conde!=null?+(s2.conde).toFixed(3):null,higherBetter:false,desc:'Conf def efficiency vs national average (ratio <1 = above avg)'},
+    // ── SCHEDULE ──
+    {label:'SOS',key:'sos',t1:s1.sos!=null?+(s1.sos).toFixed(4):null,t2:s2.sos!=null?+(s2.sos).toFixed(4):null,higherBetter:true,desc:'Overall strength of schedule',section:'SCHEDULE'},
+    {label:'ELITE SOS',key:'elite_sos',t1:s1.elite_sos!=null?+(s1.elite_sos*100).toFixed(1):null,t2:s2.elite_sos!=null?+(s2.elite_sos*100).toFixed(1):null,higherBetter:true,desc:'% of schedule vs top-50 teams'},
+    {label:'NC SOS',key:'ncsos',t1:s1.ncsos!=null?+(s1.ncsos).toFixed(4):null,t2:s2.ncsos!=null?+(s2.ncsos).toFixed(4):null,higherBetter:true,desc:'Non-conference strength of schedule'},
+    {label:'ELITE NC SOS',key:'elite_ncsos',t1:s1.elite_ncsos!=null?+(s1.elite_ncsos*100).toFixed(1):null,t2:s2.elite_ncsos!=null?+(s2.elite_ncsos*100).toFixed(1):null,higherBetter:true,desc:'% of non-conf schedule vs top-50 teams'},
+    {label:'WAB',key:'wab',t1:s1.wab!=null?+(s1.wab).toFixed(2):null,t2:s2.wab!=null?+(s2.wab).toFixed(2):null,higherBetter:true,desc:'Wins Above Bubble — NCAA tournament selection metric'},
+    // ── FOUR FACTORS ──
+    {label:'EFF FG%',key:'efg',t1:s1.efg,t2:s2.efg,higherBetter:true,desc:'Shooting efficiency (FG% adjusted for 3-pointers)',section:'FOUR FACTORS'},
+    {label:'TURNOVER RATE',key:'tov',t1:s1.tov,t2:s2.tov,higherBetter:false,desc:'Turnovers per 100 possessions — lower is better'},
+    {label:'OFF REB RATE',key:'orb',t1:s1.orb,t2:s2.orb,higherBetter:true,desc:'Offensive rebound rate — second chances'},
+    {label:'FT RATE',key:'ftr',t1:s1.ftr,t2:s2.ftr,higherBetter:true,desc:'Free throw attempts per field goal attempt'},
+    // ── STYLE ──
+    {label:'PACE',key:'pace',t1:s1.pace!=null?+(s1.pace).toFixed(1):null,t2:s2.pace!=null?+(s2.pace).toFixed(1):null,higherBetter:true,desc:'Possessions per 40 minutes',section:'STYLE'},
+    {label:'3PT RATE',key:'tpr',t1:s1.tpr||35,t2:s2.tpr||35,higherBetter:false,desc:'3-point attempt rate — higher means more variance'},
+    {label:'EXPERIENCE',key:'exp',t1:s1.exp||0,t2:s2.exp||0,higherBetter:true,desc:'Roster experience/continuity (0-4 scale)'},
+    {label:'FUN FACTOR',key:'fun',t1:s1.fun!=null?+(s1.fun).toFixed(3):null,t2:s2.fun!=null?+(s2.fun).toFixed(3):null,higherBetter:true,desc:'Barttorvik pace/style signature score'},
   ].filter(function(m){return m.t1!=null&&m.t2!=null;});
   var t1Edge=0,t2Edge=0;
   metrics.forEach(function(m){var t1B=m.higherBetter?m.t1>m.t2:m.t1<m.t2;if(t1B)t1Edge++;else t2Edge++;});
@@ -2398,26 +2479,29 @@ function runMatchup(){
   }
 
   var html='<div class="card">'
-    +'<div class="card-header"><span class="book">MATCHUP</span><span class="time">'+matchupTeam1+' vs '+matchupTeam2+'</span></div>'
+    +'<div class="card-header"><span class="book">MATCHUP &mdash; ALL BARTTORVIK STATS</span><span class="time">'+new Date().toLocaleDateString([],{month:'short',day:'numeric'})+'</span></div>'
     +'<div class="card-body">'
-    +'<div style="display:grid;grid-template-columns:1fr 80px 1fr;gap:6px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid #151f2e">'
-    +'<div style="font-size:14px;font-weight:700;color:#fff">'+matchupTeam1+'</div>'
-    +'<div style="font-size:9px;color:#8aa0b8;text-align:center;padding-top:4px">STAT</div>'
-    +'<div style="font-size:14px;font-weight:700;color:#fff;text-align:right">'+matchupTeam2+'</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 80px 1fr;gap:6px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #151f2e">'
+    +'<div><div style="font-size:14px;font-weight:700;color:#fff">'+matchupTeam1+'</div>'+hdr1+'</div>'
+    +'<div style="font-size:9px;color:#8aa0b8;text-align:center;padding-top:6px">VS</div>'
+    +'<div style="text-align:right"><div style="font-size:14px;font-weight:700;color:#fff">'+matchupTeam2+'</div>'+hdr2+'</div>'
     +'</div>'
     +metrics.map(function(m){
       var t1B=m.higherBetter?m.t1>m.t2:m.t1<m.t2;
-      var pctKeys1=['efg','tov','orb','tpr','elite_sos','conf_wpct'];
-      var v1=m.key==='net'?(m.t1>=0?'+':'')+m.t1.toFixed(1):
-        m.key==='wab'?(m.t1>=0?'+':'')+m.t1.toFixed(1):
-        m.t1.toFixed(1)+(pctKeys1.indexOf(m.key)>-1?'%':'');
-      var v2=m.key==='net'?(m.t2>=0?'+':'')+m.t2.toFixed(1):
-        m.key==='wab'?(m.t2>=0?'+':'')+m.t2.toFixed(1):
-        m.t2.toFixed(1)+(pctKeys1.indexOf(m.key)>-1?'%':'');
-      return '<div style="display:grid;grid-template-columns:1fr 80px 1fr;gap:6px;padding:7px 0;border-bottom:1px solid #151f2e;align-items:center">'
-        +'<div style="font-size:13px;font-weight:700;color:'+(t1B?'#38bdf8':'#a0b4c8')+'">'+v1+(t1B?' &#10003;':'')+'</div>'
-        +'<div style="text-align:center"><div style="font-size:8px;color:#7a8fa6;letter-spacing:0.5px">'+m.label+'</div><div style="font-size:9px;color:#64748b;margin-top:1px">'+m.desc+'</div></div>'
-        +'<div style="font-size:13px;font-weight:700;color:'+(!t1B?'#38bdf8':'#a0b4c8')+';text-align:right">'+(!t1B?'&#10003; ':'')+v2+'</div>'
+      var signKeys=['net','wab'];
+      var pctKeys=['efg','tov','orb','ftr','elite_sos','elite_ncsos','conf_wpct'];
+      function fmtVal(v,key){
+        if(v==null) return '--';
+        if(signKeys.indexOf(key)>-1) return (v>=0?'+':'')+v.toFixed(1);
+        if(pctKeys.indexOf(key)>-1) return v.toFixed(1)+'%';
+        return typeof v==='number'?v.toFixed(v%1===0?0:2):v;
+      }
+      var v1=fmtVal(m.t1,m.key), v2=fmtVal(m.t2,m.key);
+      var sectionDiv=m.section?'<div style="grid-column:1/-1;font-size:8px;color:#f59e0b;letter-spacing:2px;padding:8px 0 4px;border-top:1px solid #1e2d3d;margin-top:4px;font-weight:700">'+m.section+'</div>':'';
+      return sectionDiv+'<div style="display:grid;grid-template-columns:1fr 100px 1fr;gap:4px;padding:6px 0;border-bottom:1px solid #0d1a26;align-items:center">'
+        +'<div style="font-size:12px;font-weight:700;color:'+(t1B?'#38bdf8':'#94a3b8')+'">'+v1+(t1B?' ✓':'')+'</div>'
+        +'<div style="text-align:center"><div style="font-size:8px;color:#7a8fa6;letter-spacing:0.3px;font-weight:600">'+m.label+'</div><div style="font-size:8px;color:#4a5a6a;margin-top:1px;line-height:1.2">'+m.desc+'</div></div>'
+        +'<div style="font-size:12px;font-weight:700;color:'+(!t1B?'#38bdf8':'#94a3b8')+';text-align:right">'+(!t1B?'✓ ':'')+v2+'</div>'
         +'</div>';
     }).join('')
     +'<div style="margin-top:12px;padding:12px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);border-radius:10px">'
