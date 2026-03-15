@@ -148,6 +148,9 @@ button{cursor:pointer}
 /* Factor grid for matchup */
 .factor-row{display:grid;grid-template-columns:1fr 80px 1fr;gap:6px;align-items:center;padding:7px 0;border-bottom:1px solid #151f2e}
 .factor-row:last-child{border-bottom:none}
+/* Splash screen CSS-guaranteed auto-dismiss — works even if JS fails */
+@keyframes splashFadeOut{0%,70%{opacity:1;visibility:visible}85%{opacity:0;visibility:visible}100%{opacity:0;visibility:hidden;display:none}}
+#splash-screen{animation:splashFadeOut 6.5s forwards;-webkit-animation:splashFadeOut 6.5s forwards}
 </style>
 </head>
 <body>
@@ -882,33 +885,36 @@ function toggleTheme(){
 }
 var SHOW_SPLASH = true;
 var _splashDismissed = false;
+var _appBooted = false;
 function dismissSplash(){
   if(_splashDismissed) return;
   _splashDismissed = true;
   var splash=document.getElementById('splash-screen');
   if(!splash) return;
-  splash.style.transition='opacity 0.6s';
+  splash.style.animation='none';
+  splash.style.webkitAnimation='none';
+  splash.style.transition='opacity 0.5s ease';
   splash.style.opacity='0';
-  setTimeout(function(){ splash.style.display='none'; },650);
+  splash.style.pointerEvents='none';
+  setTimeout(function(){ if(splash) splash.style.display='none'; }, 550);
 }
-window.onload = function(){
+function _initSplash(){
+  var splash=document.getElementById('splash-screen');
+  if(!splash) return;
+  setTimeout(function(){ var h=document.getElementById('splash-hint'); if(h) h.style.opacity='1'; }, 2000);
+  setTimeout(dismissSplash, 4000);
+  splash.addEventListener('touchstart', function(){ dismissSplash(); }, {passive:true, once:true});
+  splash.addEventListener('click', function(){ dismissSplash(); }, {once:true});
+}
+function _bootApp(){
+  if(_appBooted) return;
+  _appBooted = true;
   applyTheme();
-  // Always start the app immediately — splash is just a visual overlay
   if(API_KEY) launchApp(); else showSetup();
-  if(SHOW_SPLASH){
-    var splash=document.getElementById('splash-screen');
-    if(splash){
-      // Show tap hint after 2.5s
-      setTimeout(function(){ var h=document.getElementById('splash-hint'); if(h) h.style.opacity='1'; },2500);
-      // Auto-dismiss after 5s no matter what
-      setTimeout(dismissSplash, 5000);
-      // Dismiss on any interaction
-      function onSplashInteract(){ dismissSplash(); }
-      splash.addEventListener('touchstart', onSplashInteract, {passive:true, once:true});
-      splash.addEventListener('click', onSplashInteract, {once:true});
-    }
-  }
-};
+  if(SHOW_SPLASH) _initSplash();
+}
+document.addEventListener('DOMContentLoaded', _bootApp);
+window.onload = _bootApp;
 
 // ============================================================
 // SETUP
