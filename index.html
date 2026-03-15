@@ -530,6 +530,11 @@ button{cursor:pointer}
 
       <!-- Team Lookup -->
       <div id="stats-team-panel">
+        <div style="margin-bottom:14px">
+          <div style="font-size:9px;color:#f59e0b;letter-spacing:1px;font-weight:700;margin-bottom:8px">TOURNAMENT BUBBLE BOARD — SORTED BY BARTHAG</div>
+          <div id="bubble-board" style="max-height:260px;overflow-y:auto;border:1px solid #1e2d3d;border-radius:8px"></div>
+        </div>
+        <div style="font-size:9px;color:#7a8fa6;letter-spacing:1px;margin-bottom:6px">TEAM LOOKUP</div>
         <input id="team-search" type="text" placeholder="Search team name..." oninput="searchTeam(this.value)" style="width:100%;background:#111825;border:1px solid #1e2e40;border-radius:10px;color:#e0e6f0;padding:11px 13px;font-size:14px;margin-bottom:10px"/>
         <div id="team-search-results"></div>
         <div id="team-stats-card"></div>
@@ -765,13 +770,19 @@ button{cursor:pointer}
 // ============================================================
 function sanitizeApiKey(raw) {
   if (!raw) return '';
-  // Strip all whitespace, newlines, zero-width spaces, smart quotes, BOM, and other invisible chars
-  return raw
-    .replace(/[ --]/g, '') // control chars
-    .replace(/[​-‍﻿­]/g, '')   // zero-width, soft hyphen, BOM
-    .replace(/[‘’“”]/g, '')     // smart quotes
-    .replace(/\s/g, '')                              // all whitespace
-    .trim();
+  var out = '';
+  for (var i = 0; i < raw.length; i++) {
+    var c = raw.charCodeAt(i);
+    // Skip whitespace, control chars, zero-width, BOM, soft-hyphen, smart quotes
+    if (c <= 32) continue;
+    if (c === 0x00AD) continue;
+    if (c === 0x200B || c === 0x200C || c === 0x200D) continue;
+    if (c === 0xFEFF) continue;
+    if (c === 0x2018 || c === 0x2019 || c === 0x201C || c === 0x201D) continue;
+    if (c >= 127 && c <= 159) continue;
+    out += raw[i];
+  }
+  return out;
 }
 
 async function pasteFromClipboard(inputId, msgId) {
@@ -1028,6 +1039,7 @@ function switchBetsSub(panel){
     document.getElementById(p).style.display = p===panel?'block':'none';
   });
   if(panel==='accuracy-panel') renderAccuracyTab();
+  if(panel==='stats-panel') { _ensureStats(); renderBubbleBoard(); }
   if(panel==='log-panel') renderHistory();
 }
 function switchToolsSub(panel){
@@ -1619,8 +1631,7 @@ async function fetchOdds(){
     buildBookSelector(cached);
     document.getElementById('odds-filters').style.display=allGamesData.length?'block':'none';
     if(allGamesData.length){
-      var hasTourney=allGamesData.some(function(g){return g.league==='tournament';});
-      filterOdds(hasTourney?'tournament':currentOddsFilter);
+      filterOdds('all');
     }
     document.getElementById('last-updated').textContent='Updated '+new Date(oddsCache.timestamp).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})+' (cached)';
     updateCacheUI();
@@ -2140,6 +2151,49 @@ function setStatsMode(mode){
   document.getElementById('stats-mode-matchup').style.borderColor=mode==='matchup'?'#f59e0b':'#2a3a4a';
   document.getElementById('stats-mode-matchup').style.color=mode==='matchup'?'#f59e0b':'#667788';
 }
+function renderBubbleBoard(){
+  var el=document.getElementById('bubble-board');
+  if(!el) return;
+  _ensureStats();
+  var db=TEAM_STATS_DEFAULT||{};
+  var teams=Object.keys(db).map(function(name){
+    var s=db[name];
+    return {name:name, barthag:s.barthag||0, record:s.record||'', conf:s.conf||'', ortg:s.ortg||0, drtg:s.drtg||0, wab:s.wab||0};
+  });
+  // Sort by Barthag descending
+  teams.sort(function(a,b){return b.barthag-a.barthag;});
+  // Show top 68 (tournament field size)
+  var top=teams.slice(0,68);
+  var rows=top.map(function(t,i){
+    var pct=Math.round(t.barthag*1000)/10;
+    var wabStr=t.wab>=0?'+'+t.wab.toFixed(1):t.wab.toFixed(1);
+    var seed=i<4?'1':i<8?'2':i<12?'3':i<16?'4':i<20?'5':i<24?'6':i<28?'7':i<32?'8':i<36?'9':i<40?'10':i<44?'11':i<52?'12-13':i<60?'14-15':'16';
+    var bg=i<4?'rgba(245,158,11,0.15)':i<16?'rgba(59,130,246,0.08)':i<36?'rgba(34,197,94,0.06)':'rgba(148,163,184,0.04)';
+    var dot=i<4?'#f59e0b':i<16?'#3b82f6':i<36?'#22c55e':'#64748b';
+    return '<div data-team="'+t.name.replace(/"/g,"&quot;")+'" onclick="lookupTeamFromBoard(this.dataset.team)" style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-bottom:1px solid #0f1923;cursor:pointer;background:'+bg+'">' 
+      +'<span style="width:22px;text-align:center;font-size:9px;color:'+dot+';font-weight:700">'+(i+1)+'</span>'
+      +'<span style="width:8px;height:8px;border-radius:50%;background:'+dot+';flex-shrink:0"></span>'
+      +'<div style="flex:1;min-width:0">'
+        +'<div style="font-size:12px;font-weight:600;color:#e2e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+t.name+'</div>'
+        +'<div style="font-size:9px;color:#7a8fa6">'+t.conf+' &middot; '+t.record+'</div>'
+      +'</div>'
+      +'<div style="text-align:right;flex-shrink:0">'
+        +'<div style="font-size:11px;font-weight:700;color:'+dot+'">'+pct+'</div>'
+        +'<div style="font-size:8px;color:#7a8fa6">WAB '+wabStr+'</div>'
+      +'</div>'
+      +'</div>';
+  });
+  el.innerHTML=rows.join('');
+}
+
+function lookupTeamFromBoard(name){
+  var inp=document.getElementById('team-search');
+  if(inp){ inp.value=name; searchTeam(name); }
+  // scroll to search results
+  var res=document.getElementById('team-search-results');
+  if(res) res.scrollIntoView({behavior:'smooth'});
+}
+
 function searchTeam(val){
   var res=document.getElementById('team-search-results');
   document.getElementById('team-stats-card').innerHTML='';
