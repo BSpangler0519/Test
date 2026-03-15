@@ -763,6 +763,17 @@ button{cursor:pointer}
 // ============================================================
 // CLIPBOARD PASTE HELPER — resolves mobile paste issues
 // ============================================================
+function sanitizeApiKey(raw) {
+  if (!raw) return '';
+  // Strip all whitespace, newlines, zero-width spaces, smart quotes, BOM, and other invisible chars
+  return raw
+    .replace(/[ --]/g, '') // control chars
+    .replace(/[​-‍﻿­]/g, '')   // zero-width, soft hyphen, BOM
+    .replace(/[‘’“”]/g, '')     // smart quotes
+    .replace(/\s/g, '')                              // all whitespace
+    .trim();
+}
+
 async function pasteFromClipboard(inputId, msgId) {
   var el = document.getElementById(inputId);
   var msg = msgId ? document.getElementById(msgId) : null;
@@ -777,9 +788,9 @@ async function pasteFromClipboard(inputId, msgId) {
     try {
       var text = await navigator.clipboard.readText();
       if (text && text.trim()) {
-        el.value = text.trim();
+        el.value = sanitizeApiKey(text);
         el.dispatchEvent(new Event('input'));
-        showMsg('✓ Pasted! (' + text.trim().length + ' chars)');
+        showMsg('✓ Pasted! (' + sanitizeApiKey(text).length + ' chars)');
       } else {
         showMsg('Clipboard appears empty. Copy your key first.', '#f59e0b');
       }
@@ -806,8 +817,8 @@ function toggleShow(inputId, btn) {
 }
 
 function saveKeysFromPanel() {
-  var ok = document.getElementById('keys-panel-odds-input').value.trim();
-  var ck = document.getElementById('keys-panel-claude-input').value.trim();
+  var ok = sanitizeApiKey(document.getElementById('keys-panel-odds-input').value);
+  var ck = sanitizeApiKey(document.getElementById('keys-panel-claude-input').value);
   var hadOddsKey = !!API_KEY;
   if (ok) { API_KEY = ok; localStorage.setItem('oddsApiKey', ok); }
   if (ck) { CLAUDE_KEY = ck; localStorage.setItem('claudeApiKey', ck); }
@@ -918,10 +929,10 @@ window.onload = function(){
 // SETUP
 // ============================================================
 function saveApiKey(){
-  var k=document.getElementById('api-key-input').value.trim();
+  var k=sanitizeApiKey(document.getElementById('api-key-input').value);
   if(!k){alert('Please paste your Odds API key first.');return;}
   API_KEY=k; localStorage.setItem('oddsApiKey',k);
-  var ck=document.getElementById('claude-key-input').value.trim();
+  var ck=sanitizeApiKey(document.getElementById('claude-key-input').value);
   if(ck){ CLAUDE_KEY=ck; localStorage.setItem('claudeApiKey',ck); }
   launchApp();
 }
@@ -1688,7 +1699,7 @@ async function fetchOdds(){
       document.getElementById('odds-list').innerHTML='<div class="empty">No NCAA games with odds right now.<br/><span style="font-size:11px">Odds appear ~1 week before games.<br/></span></div>';
     } else {
       document.getElementById('odds-filters').style.display='block';
-      filterOdds(d2.length>0?'tournament':'all');
+      filterOdds('all');
     }
     var now=new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
     document.getElementById('last-updated').textContent='Updated '+now+' &middot; '+allGamesData.length+' games';
