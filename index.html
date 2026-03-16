@@ -174,7 +174,7 @@ button{cursor:pointer}
 </div>
 
 <!-- SETUP -->
-<div id="setup-screen" style="padding:0 16px 40px;padding-top:calc(env(safe-area-inset-top) + 16px)">
+<div id="setup-screen" style="display:none;padding:0 16px 40px;padding-top:calc(env(safe-area-inset-top) + 16px)">
   <div style="text-align:center;padding:20px 0 16px">
     <div style="font-size:11px;color:#f59e0b;letter-spacing:3px">NCAA TOURNAMENT</div>
     <div style="font-size:28px;font-weight:700;color:#fff;margin-top:4px">Leonard's <span style="color:#f59e0b">Locks</span></div>
@@ -524,8 +524,7 @@ button{cursor:pointer}
 
     <!-- STATS PANEL -->
     <div id="stats-panel" style="display:none">
-      <button onclick="quickBartRefresh()" style="width:100%;padding:9px;background:rgba(56,189,248,0.1);border:1px solid #38bdf8;border-radius:8px;color:#38bdf8;font-size:11px;font-weight:700;font-family:inherit;margin-bottom:10px">&#127758; REFRESH STATS FROM BARTTORVIK</button>
-      <div id="bart-quick-status" style="font-size:10px;color:#38bdf8;text-align:center;margin:-6px 0 8px;display:none"></div>
+
       <div style="display:flex;gap:8px;margin-bottom:14px">
         <button id="stats-mode-team" onclick="setStatsMode('team')" style="flex:1;padding:9px;background:rgba(245,158,11,0.2);border:1px solid #f59e0b;border-radius:8px;color:#f59e0b;font-size:11px;font-weight:700;letter-spacing:1px">TEAM LOOKUP</button>
         <button id="stats-mode-matchup" onclick="setStatsMode('matchup')" style="flex:1;padding:9px;background:transparent;border:1px solid #2a3a4a;border-radius:8px;color:#667788;font-size:11px;font-weight:700;letter-spacing:1px">MATCHUP</button>
@@ -942,7 +941,7 @@ button{cursor:pointer}
 </div>
 
 <!-- SETUP -->
-<div id="setup-screen" style="padding:0 16px 40px;padding-top:calc(env(safe-area-inset-top) + 16px)">
+<div id="setup-screen" style="display:none;padding:0 16px 40px;padding-top:calc(env(safe-area-inset-top) + 16px)">
   <div style="text-align:center;padding:20px 0 16px">
     <div style="font-size:11px;color:#f59e0b;letter-spacing:3px">NCAA TOURNAMENT</div>
     <div style="font-size:28px;font-weight:700;color:#fff;margin-top:4px">Leonard's <span style="color:#f59e0b">Locks</span></div>
@@ -1292,8 +1291,7 @@ button{cursor:pointer}
 
     <!-- STATS PANEL -->
     <div id="stats-panel" style="display:none">
-      <button onclick="quickBartRefresh()" style="width:100%;padding:9px;background:rgba(56,189,248,0.1);border:1px solid #38bdf8;border-radius:8px;color:#38bdf8;font-size:11px;font-weight:700;font-family:inherit;margin-bottom:10px">&#127758; REFRESH STATS FROM BARTTORVIK</button>
-      <div id="bart-quick-status" style="font-size:10px;color:#38bdf8;text-align:center;margin:-6px 0 8px;display:none"></div>
+
       <div style="display:flex;gap:8px;margin-bottom:14px">
         <button id="stats-mode-team" onclick="setStatsMode('team')" style="flex:1;padding:9px;background:rgba(245,158,11,0.2);border:1px solid #f59e0b;border-radius:8px;color:#f59e0b;font-size:11px;font-weight:700;letter-spacing:1px">TEAM LOOKUP</button>
         <button id="stats-mode-matchup" onclick="setStatsMode('matchup')" style="flex:1;padding:9px;background:transparent;border:1px solid #2a3a4a;border-radius:8px;color:#667788;font-size:11px;font-weight:700;letter-spacing:1px">MATCHUP</button>
@@ -1540,17 +1538,7 @@ button{cursor:pointer}
 // ============================================================
 // GLOBAL ERROR TRAP — shows runtime errors on splash screen
 // ============================================================
-window.onerror = function(msg, src, line, col, err) {
-  var el = document.getElementById('splash-error');
-  if (!el) {
-    el = document.createElement('div');
-    el.id = 'splash-error';
-    el.style.cssText = 'position:fixed;bottom:20px;left:10px;right:10px;background:rgba(220,38,38,0.95);color:#fff;padding:12px;border-radius:8px;font-size:11px;font-family:monospace;z-index:99999;word-break:break-all;line-height:1.5';
-    document.body.appendChild(el);
-  }
-  el.innerHTML = '<strong>JS ERROR line ' + line + ':</strong><br>' + msg;
-  return false;
-};
+// (debug trap removed)
 
 // ============================================================
 // CLIPBOARD PASTE HELPER — resolves mobile paste issues
@@ -2191,99 +2179,7 @@ function bartImportTeams(teams){
 }
 
 
-async function quickBartRefresh(){
-  var statusEl = document.getElementById('bart-quick-status');
-  function setStatus(msg, color){
-    if(!statusEl) return;
-    statusEl.style.display = 'block';
-    statusEl.style.color = color || '#38bdf8';
-    statusEl.textContent = msg;
-  }
-
-  if(!CLAUDE_KEY){
-    setStatus('Claude API key required. Go to TOOLS → KEYS to add it.', '#f59e0b');
-    return;
-  }
-
-  setStatus('⏳ Asking Claude AI for current season stats... (15-30s)');
-
-  // Build the list of team names from our built-in DB so Claude knows exactly what to return
-  var knownTeams = getAllTeamNames ? getAllTeamNames() : [];
-  var teamListStr = knownTeams.length > 0 ? ('\n\nUpdate stats for these teams (use exact name spelling): ' + knownTeams.join(', ')) : '';
-
-  var prompt = 'You are a college basketball stats database. Return a JSON object (raw JSON only — no markdown, no explanation, no prose, just the JSON) mapping NCAA basketball team names to their current 2024-25 season Barttorvik/KenPom-style stats. Each team entry must have ALL of these numeric fields: ortg (adj offensive efficiency, typical range 90-130), drtg (adj defensive efficiency, typical range 88-120), barthag (T-Rank win probability vs avg D1 team, decimal 0.0-1.0), efg (effective FG% like 53.2), tov (turnover rate like 16.8), orb (offensive rebound rate like 28.5), ftr (free throw rate like 32.1), pace (possessions per 40 min like 68.4), ppg (points per game like 78.3), record (string like "28-5"), conf (conference abbreviation like "ACC", "SEC", "B12", "BE"), wab (wins above bubble, can be negative), sos (strength of schedule decimal like 0.1234), ncsos (non-conf SOS decimal like -0.0456), proj_w (projected wins integer), proj_l (projected losses integer). Use your knowledge of the current 2024-25 NCAA season. Return ONLY valid JSON starting with { and ending with }. No other text whatsoever.' + teamListStr;
-
-  try{
-    var resp = await claudeFetchWithRetry('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': CLAUDE_KEY,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 16000,
-        messages: [{role:'user', content: prompt}]
-      })
-    });
-
-    if(!resp.ok){
-      var errText = await resp.text();
-      setStatus('✗ Claude API error '+resp.status+': '+errText.slice(0,120), '#f87171');
-      return;
-    }
-
-    var result = await resp.json();
-    var raw = (result.content&&result.content[0]&&result.content[0].text)||'';
-
-    // Strip any markdown fences if present
-    raw = raw.replace(/^```json\s*/,'').replace(/^```\s*/,'').replace(/\s*```$/,'').trim();
-
-    // Find JSON boundaries
-    var jsonStart = raw.indexOf('{');
-    var jsonEnd = raw.lastIndexOf('}');
-    if(jsonStart === -1 || jsonEnd === -1){
-      setStatus('✗ No valid JSON in response. Try again or use TOOLS → BARTTORVIK.', '#f87171');
-      return;
-    }
-    raw = raw.slice(jsonStart, jsonEnd+1);
-
-    var parsed;
-    try{ parsed = JSON.parse(raw); }
-    catch(e){
-      setStatus('✗ JSON parse error: '+e.message.slice(0,80), '#f87171');
-      return;
-    }
-
-    var count = Object.keys(parsed).length;
-    if(count < 10){
-      setStatus('✗ Only '+count+' teams parsed — response may be incomplete. Try again.', '#f87171');
-      return;
-    }
-
-    // Merge with existing custom stats (preserve ATS records etc)
-    var existing = JSON.parse(localStorage.getItem('teamStatsCustom')||'{}');
-    Object.keys(parsed).forEach(function(k){
-      existing[k] = Object.assign(existing[k]||{}, parsed[k]);
-    });
-    localStorage.setItem('teamStatsCustom', JSON.stringify(existing));
-
-    // Reload into memory
-    teamStats = existing;
-    TEAM_STATS_DEFAULT = null;
-    _ensureStats();
-
-    setStatus('✓ Updated '+count+' teams from Barttorvik via Claude!', '#4ade80');
-    if(typeof renderBubbleBoard === 'function') renderBubbleBoard();
-    setTimeout(function(){ if(statusEl) statusEl.style.display='none'; }, 5000);
-
-  }catch(e){
-    setStatus('✗ Error: '+e.message.slice(0,120), '#f87171');
-  }
-}
-
+// quickBartRefresh removed
 
 async function bartFetchLive(){
   var btn=document.getElementById('bart-fetch-btn');
