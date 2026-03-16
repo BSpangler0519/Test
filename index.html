@@ -3173,9 +3173,9 @@ function runMatchup(){
     {label:'3PT RATE',key:'tpr',t1:s1.tpr||35,t2:s2.tpr||35,higherBetter:false,desc:'3-point attempt rate — higher means more variance'},
     {label:'EXPERIENCE',key:'exp',t1:s1.exp||0,t2:s2.exp||0,higherBetter:true,desc:'Roster experience/continuity (0-4 scale)'},
     {label:'FUN FACTOR',key:'fun',t1:s1.fun!=null?+(s1.fun).toFixed(3):null,t2:s2.fun!=null?+(s2.fun).toFixed(3):null,higherBetter:true,desc:'Barttorvik pace/style signature score'},
-  ].filter(function(m){return m.t1!=null&&m.t2!=null;});
+  ];  // show all rows; fmtVal handles null as "--"
   var t1Edge=0,t2Edge=0;
-  metrics.forEach(function(m){var t1B=m.higherBetter?m.t1>m.t2:m.t1<m.t2;if(t1B)t1Edge++;else t2Edge++;});
+  metrics.forEach(function(m){if(m.t1==null||m.t2==null) return; var t1B=m.higherBetter?m.t1>m.t2:m.t1<m.t2;if(t1B)t1Edge++;else t2Edge++;});
 
   var valueHTML='';
   if(odds1&&odds2){
@@ -3206,7 +3206,7 @@ function runMatchup(){
     +'<div style="text-align:right"><div style="font-size:14px;font-weight:700;color:#fff">'+matchupTeam2+'</div>'+hdr2+'</div>'
     +'</div>'
     +metrics.map(function(m){
-      var t1B=m.higherBetter?m.t1>m.t2:m.t1<m.t2;
+      var t1B=(m.t1!=null&&m.t2!=null)?(m.higherBetter?m.t1>m.t2:m.t1<m.t2):false;
       var signKeys=['net','wab'];
       var pctKeys=['efg','tov','orb','ftr','elite_sos','elite_ncsos','conf_wpct'];
       function fmtVal(v,key){
@@ -3225,8 +3225,8 @@ function runMatchup(){
     }).join('')
     +'<div style="margin-top:12px;padding:12px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);border-radius:10px">'
     +'<div style="font-size:9px;color:#f59e0b;letter-spacing:2px;margin-bottom:8px">STATISTICAL EDGE</div>'
-    +'<div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:13px;color:#fff">'+matchupTeam1+'</span><span style="font-size:13px;font-weight:700;color:'+(t1Edge>=t2Edge?'#38bdf8':'#a0b4c8')+'">'+t1Edge+'/'+metrics.length+' metrics</span></div>'
-    +'<div style="display:flex;justify-content:space-between;margin-bottom:10px"><span style="font-size:13px;color:#fff">'+matchupTeam2+'</span><span style="font-size:13px;font-weight:700;color:'+(t2Edge>t1Edge?'#38bdf8':'#a0b4c8')+'">'+t2Edge+'/'+metrics.length+' metrics</span></div>'
+    +'<div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:13px;color:#fff">'+matchupTeam1+'</span><span style="font-size:13px;font-weight:700;color:'+(t1Edge>=t2Edge?'#38bdf8':'#a0b4c8')+'">'+t1Edge+'/'+metrics.filter(function(m){return m.t1!=null&&m.t2!=null;}).length+' metrics</span></div>'
+    +'<div style="display:flex;justify-content:space-between;margin-bottom:10px"><span style="font-size:13px;color:#fff">'+matchupTeam2+'</span><span style="font-size:13px;font-weight:700;color:'+(t2Edge>t1Edge?'#38bdf8':'#a0b4c8')+'">'+t2Edge+'/'+metrics.filter(function(m){return m.t1!=null&&m.t2!=null;}).length+' metrics</span></div>'
     +'<div style="font-size:12px;color:#a0b4c8;margin-bottom:4px">Projected win prob (Net Rating):</div>'
     +'<div style="font-size:15px;font-weight:700;color:#38bdf8">'+statFav+' '+statFavProb+'%</div>'
     +'</div>'
