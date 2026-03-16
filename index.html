@@ -266,7 +266,7 @@ button{cursor:pointer}
   <div id="tab-games" class="tab-content">
     <div id="odds-error" style="display:none"></div>
     <div id="odds-loading" class="empty" style="display:none">Fetching live odds...</div>
-    <div id="odds-debug" style="display:none;background:#1e293b;border:1px solid #334155;border-radius:8px;padding:10px;margin-bottom:10px;font-size:10px;color:#94a3b8;white-space:pre-wrap;word-break:break-all;max-height:200px;overflow-y:auto"></div>
+    
 
     <!-- Bookmaker Selector -->
     <div id="book-selector-row" style="display:none;margin-bottom:10px">
@@ -1029,7 +1029,7 @@ button{cursor:pointer}
   <div id="tab-games" class="tab-content">
     <div id="odds-error" style="display:none"></div>
     <div id="odds-loading" class="empty" style="display:none">Fetching live odds...</div>
-    <div id="odds-debug" style="display:none;background:#1e293b;border:1px solid #334155;border-radius:8px;padding:10px;margin-bottom:10px;font-size:10px;color:#94a3b8;white-space:pre-wrap;word-break:break-all;max-height:200px;overflow-y:auto"></div>
+    
 
     <!-- Bookmaker Selector -->
     <div id="book-selector-row" style="display:none;margin-bottom:10px">
@@ -2457,8 +2457,6 @@ async function fetchOdds(){
 
   var safeFetch=function(url){
     // Log the URL for debugging (show in debug panel)
-    var dbgEl=document.getElementById('odds-debug');
-    if(dbgEl){ dbgEl.style.display='block'; dbgEl.textContent='Fetching: '+url.replace(API_KEY,'[KEY]')+'\n'; }
     return fetch(url, {mode:'cors'}).then(function(r){
       if(r.ok) return r.json();
       return r.json().catch(function(){return {message:'HTTP '+r.status};}).then(function(err){
@@ -2509,31 +2507,7 @@ async function fetchOdds(){
     allGamesData=combined.map(function(g){return transformGame(g,selectedBookmaker);}).filter(Boolean);
     buildBookSelector(combined);
 
-    // Debug output
-    var dbg=document.getElementById('odds-debug');
-    if(dbg){
-      var byLeague={ncaab:0,tournament:0};
-      combined.forEach(function(g){byLeague[g._league]=(byLeague[g._league]||0)+1;});
-      var info='API returned: '+combined.length+' total games ('+byLeague.ncaab+' NCAAB + '+byLeague.tournament+' tournament)\n';
-      info+='Transformed: '+allGamesData.length+' games with valid odds\n';
-      if(combined.length>0){
-        info+='First game: '+combined[0].away_team+' @ '+combined[0].home_team+'\n';
-        info+='Bookmakers on first game: '+(combined[0].bookmakers||[]).map(function(b){return b.key;}).join(', ')+'\n';
-      }
-      if(combined.length>0 && allGamesData.length===0){
-        // Show why transformGame returned null for first game
-        var g0=combined[0], books=g0.bookmakers||[];
-        info+='\nWARN: All games filtered out by transformGame!\n';
-        info+='Books on game 0: '+books.length+'\n';
-        if(books[0]){
-          info+='Markets on book 0: '+(books[0].markets||[]).map(function(m){return m.key;}).join(', ')+'\n';
-          var h2h=(books[0].markets||[]).find(function(m){return m.key==='h2h';});
-          if(h2h) info+='h2h outcomes: '+JSON.stringify(h2h.outcomes)+'\n';
-        }
-      }
-      dbg.style.display='block';
-      dbg.textContent=info;
-    }
+
 
     document.getElementById('odds-loading').style.display='none';
     if(!allGamesData.length){
@@ -2547,8 +2521,6 @@ async function fetchOdds(){
     updateCacheUI();
   } catch(e){
     document.getElementById('odds-loading').style.display='none';
-    var dbg=document.getElementById('odds-debug');
-    if(dbg){ dbg.style.display='block'; dbg.textContent='Exception: '+e.message; }
     renderOddsError(e.message);
   }
   btn.disabled=false; btn.innerHTML='&#8635;';
@@ -2835,6 +2807,23 @@ function _ensureStats(){
   }
 }
 
+
+
+// ── MIGRATE: clear stale estimated four-factors from localStorage so new DB values show ──
+(function(){
+  var custom = JSON.parse(localStorage.getItem('teamStatsCustom') || '{}');
+  var changed = false;
+  Object.keys(custom).forEach(function(team){
+    var s = custom[team];
+    // Old estimates were tov=13.5 for nearly all teams - if so, clear four factors
+    // so the new accurate DB values are used instead
+    if(s.tov === 13.5 || s.tov === 13.50) {
+      delete s.efg; delete s.tov; delete s.orb; delete s.ftr;
+      changed = true;
+    }
+  });
+  if(changed) localStorage.setItem('teamStatsCustom', JSON.stringify(custom));
+})();
 
 var teamStats = JSON.parse(localStorage.getItem('teamStatsCustom') || '{}');
 function getTeamStats(name){ _ensureStats(); return teamStats[name] || TEAM_STATS_DEFAULT[name] || null; }
