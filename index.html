@@ -1536,6 +1536,21 @@ button{cursor:pointer}
 
 <script>
 // ============================================================
+// GLOBAL ERROR TRAP — shows runtime errors on splash screen
+// ============================================================
+window.onerror = function(msg, src, line, col, err) {
+  var el = document.getElementById('splash-error');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'splash-error';
+    el.style.cssText = 'position:fixed;bottom:20px;left:10px;right:10px;background:rgba(220,38,38,0.95);color:#fff;padding:12px;border-radius:8px;font-size:11px;font-family:monospace;z-index:99999;word-break:break-all;line-height:1.5';
+    document.body.appendChild(el);
+  }
+  el.innerHTML = '<strong>JS ERROR line ' + line + ':</strong><br>' + msg;
+  return false;
+};
+
+// ============================================================
 // CLIPBOARD PASTE HELPER — resolves mobile paste issues
 // ============================================================
 function sanitizeApiKey(raw) {
@@ -1688,6 +1703,7 @@ function dismissSplash(){
   setTimeout(function(){ splash.style.display='none'; },650);
 }
 window.onload = function(){
+  try {
   applyTheme();
   // Always start the app immediately — splash is just a visual overlay
   if(API_KEY) launchApp(); else showSetup();
@@ -1703,6 +1719,12 @@ window.onload = function(){
       splash.addEventListener('touchstart', onSplashInteract, {passive:true, once:true});
       splash.addEventListener('click', onSplashInteract, {once:true});
     }
+  }
+  } catch(e) {
+    var el = document.getElementById('splash-error');
+    if (!el) { el = document.createElement('div'); el.id='splash-error'; el.style.cssText='position:fixed;bottom:20px;left:10px;right:10px;background:rgba(220,38,38,0.95);color:#fff;padding:12px;border-radius:8px;font-size:11px;font-family:monospace;z-index:99999;word-break:break-all;line-height:1.5'; document.body.appendChild(el); }
+    el.innerHTML = '<strong>ONLOAD ERROR:</strong><br>' + e.message + '<br><small>line ~' + (e.lineNumber||'?') + '</small>';
+    dismissSplash();
   }
 };
 
