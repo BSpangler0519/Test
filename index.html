@@ -464,20 +464,45 @@ button{cursor:pointer}
 
     <!-- ACCURACY PANEL -->
     <div id="accuracy-panel" style="display:none">
-      <div style="display:flex;gap:6px;margin-bottom:14px">
-        <button id="acc-btn-ai" onclick="switchAccuracyView('ai')" style="flex:1;padding:8px;background:rgba(245,158,11,0.15);border:1px solid #f59e0b;border-radius:8px;color:#f59e0b;font-size:10px;font-weight:700;letter-spacing:1px;font-family:inherit">AI PICKS</button>
-        <button id="acc-btn-bets" onclick="switchAccuracyView('bets')" style="flex:1;padding:8px;background:transparent;border:1px solid #2a3a4a;border-radius:8px;color:#445566;font-size:10px;font-weight:700;letter-spacing:1px;font-family:inherit">MY BETS</button>
-        <button id="acc-reset-btn" onclick="clearPickAccuracy()" style="background:rgba(249,115,22,0.1);border:1px solid #f97316;border-radius:8px;color:#f97316;padding:8px 12px;font-size:10px;font-weight:700;letter-spacing:1px;font-family:inherit">&#128465;</button>
+
+      <!-- COMPARISON HEADER - always visible -->
+      <div style="background:#111825;border:1px solid #1a2a3a;border-radius:14px;padding:14px;margin-bottom:14px">
+        <div style="font-size:9px;color:#f59e0b;letter-spacing:2px;margin-bottom:12px;text-align:center">HEAD TO HEAD COMPARISON</div>
+        <div style="display:grid;grid-template-columns:1fr 40px 1fr;gap:6px;align-items:center;margin-bottom:10px">
+          <div style="text-align:center">
+            <div style="font-size:9px;color:#f59e0b;letter-spacing:1px;margin-bottom:6px">AI PICKS</div>
+            <div id="cmp-ai-rate" style="font-size:26px;font-weight:700;color:#f59e0b">--</div>
+            <div id="cmp-ai-rec" style="font-size:10px;color:#445566;margin-top:2px">0-0</div>
+          </div>
+          <div style="text-align:center;font-size:11px;color:#334455;font-weight:700">VS</div>
+          <div style="text-align:center">
+            <div style="font-size:9px;color:#38bdf8;letter-spacing:1px;margin-bottom:6px">MY BETS</div>
+            <div id="cmp-bets-rate" style="font-size:26px;font-weight:700;color:#38bdf8">--</div>
+            <div id="cmp-bets-rec" style="font-size:10px;color:#445566;margin-top:2px">0-0</div>
+          </div>
+        </div>
+        <div id="cmp-verdict" style="text-align:center;font-size:11px;color:#556677;padding-top:8px;border-top:1px solid #1a2a3a"></div>
       </div>
+
+      <!-- TAB TOGGLE -->
+      <div style="display:flex;gap:6px;margin-bottom:14px">
+        <button id="acc-btn-ai" onclick="switchAccuracyView('ai')" style="flex:1;padding:8px;background:rgba(245,158,11,0.15);border:1px solid #f59e0b;border-radius:8px;color:#f59e0b;font-size:10px;font-weight:700;letter-spacing:1px;font-family:inherit">AI PICKS DETAIL</button>
+        <button id="acc-btn-bets" onclick="switchAccuracyView('bets')" style="flex:1;padding:8px;background:transparent;border:1px solid #2a3a4a;border-radius:8px;color:#445566;font-size:10px;font-weight:700;letter-spacing:1px;font-family:inherit">MY BETS DETAIL</button>
+        <button onclick="clearPickAccuracy()" style="background:rgba(249,115,22,0.1);border:1px solid #f97316;border-radius:8px;color:#f97316;padding:8px 12px;font-size:10px;font-weight:700;font-family:inherit">&#128465;</button>
+      </div>
+
+      <!-- AI PICKS DETAIL -->
       <div id="acc-view-ai">
-        <div style="font-size:10px;color:#445566;margin-bottom:12px">All AI picks graded after games finish &mdash; independent of your bets</div>
+        <div style="font-size:10px;color:#445566;margin-bottom:12px">All picks generated on PICKS tab &mdash; graded automatically when scores post</div>
         <div id="accuracy-summary" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px"></div>
         <div id="accuracy-breakdown" style="background:#111825;border:1px solid #1a2a3a;border-radius:14px;padding:14px;margin-bottom:14px"></div>
         <div style="font-size:10px;color:#7a8fa6;letter-spacing:1px;margin-bottom:8px">RECENTLY GRADED PICKS</div>
         <div id="accuracy-recent"></div>
       </div>
+
+      <!-- MY BETS DETAIL -->
       <div id="acc-view-bets" style="display:none">
-        <div style="font-size:10px;color:#445566;margin-bottom:12px">Your actual bet results &mdash; manual and from picks</div>
+        <div style="font-size:10px;color:#445566;margin-bottom:12px">Bets you placed &mdash; resolved manually or auto-graded from scores</div>
         <div id="bet-accuracy-summary" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px"></div>
         <div id="bet-accuracy-breakdown" style="background:#111825;border:1px solid #1a2a3a;border-radius:14px;padding:14px;margin-bottom:14px"></div>
         <div style="font-size:10px;color:#7a8fa6;letter-spacing:1px;margin-bottom:8px">RECENT BETS</div>
@@ -1195,20 +1220,45 @@ button{cursor:pointer}
 
     <!-- ACCURACY PANEL -->
     <div id="accuracy-panel" style="display:none">
-      <div style="display:flex;gap:6px;margin-bottom:14px">
-        <button id="acc-btn-ai" onclick="switchAccuracyView('ai')" style="flex:1;padding:8px;background:rgba(245,158,11,0.15);border:1px solid #f59e0b;border-radius:8px;color:#f59e0b;font-size:10px;font-weight:700;letter-spacing:1px;font-family:inherit">AI PICKS</button>
-        <button id="acc-btn-bets" onclick="switchAccuracyView('bets')" style="flex:1;padding:8px;background:transparent;border:1px solid #2a3a4a;border-radius:8px;color:#445566;font-size:10px;font-weight:700;letter-spacing:1px;font-family:inherit">MY BETS</button>
-        <button id="acc-reset-btn" onclick="clearPickAccuracy()" style="background:rgba(249,115,22,0.1);border:1px solid #f97316;border-radius:8px;color:#f97316;padding:8px 12px;font-size:10px;font-weight:700;letter-spacing:1px;font-family:inherit">&#128465;</button>
+
+      <!-- COMPARISON HEADER - always visible -->
+      <div style="background:#111825;border:1px solid #1a2a3a;border-radius:14px;padding:14px;margin-bottom:14px">
+        <div style="font-size:9px;color:#f59e0b;letter-spacing:2px;margin-bottom:12px;text-align:center">HEAD TO HEAD COMPARISON</div>
+        <div style="display:grid;grid-template-columns:1fr 40px 1fr;gap:6px;align-items:center;margin-bottom:10px">
+          <div style="text-align:center">
+            <div style="font-size:9px;color:#f59e0b;letter-spacing:1px;margin-bottom:6px">AI PICKS</div>
+            <div id="cmp-ai-rate" style="font-size:26px;font-weight:700;color:#f59e0b">--</div>
+            <div id="cmp-ai-rec" style="font-size:10px;color:#445566;margin-top:2px">0-0</div>
+          </div>
+          <div style="text-align:center;font-size:11px;color:#334455;font-weight:700">VS</div>
+          <div style="text-align:center">
+            <div style="font-size:9px;color:#38bdf8;letter-spacing:1px;margin-bottom:6px">MY BETS</div>
+            <div id="cmp-bets-rate" style="font-size:26px;font-weight:700;color:#38bdf8">--</div>
+            <div id="cmp-bets-rec" style="font-size:10px;color:#445566;margin-top:2px">0-0</div>
+          </div>
+        </div>
+        <div id="cmp-verdict" style="text-align:center;font-size:11px;color:#556677;padding-top:8px;border-top:1px solid #1a2a3a"></div>
       </div>
+
+      <!-- TAB TOGGLE -->
+      <div style="display:flex;gap:6px;margin-bottom:14px">
+        <button id="acc-btn-ai" onclick="switchAccuracyView('ai')" style="flex:1;padding:8px;background:rgba(245,158,11,0.15);border:1px solid #f59e0b;border-radius:8px;color:#f59e0b;font-size:10px;font-weight:700;letter-spacing:1px;font-family:inherit">AI PICKS DETAIL</button>
+        <button id="acc-btn-bets" onclick="switchAccuracyView('bets')" style="flex:1;padding:8px;background:transparent;border:1px solid #2a3a4a;border-radius:8px;color:#445566;font-size:10px;font-weight:700;letter-spacing:1px;font-family:inherit">MY BETS DETAIL</button>
+        <button onclick="clearPickAccuracy()" style="background:rgba(249,115,22,0.1);border:1px solid #f97316;border-radius:8px;color:#f97316;padding:8px 12px;font-size:10px;font-weight:700;font-family:inherit">&#128465;</button>
+      </div>
+
+      <!-- AI PICKS DETAIL -->
       <div id="acc-view-ai">
-        <div style="font-size:10px;color:#445566;margin-bottom:12px">All AI picks graded after games finish &mdash; independent of your bets</div>
+        <div style="font-size:10px;color:#445566;margin-bottom:12px">All picks generated on PICKS tab &mdash; graded automatically when scores post</div>
         <div id="accuracy-summary" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px"></div>
         <div id="accuracy-breakdown" style="background:#111825;border:1px solid #1a2a3a;border-radius:14px;padding:14px;margin-bottom:14px"></div>
         <div style="font-size:10px;color:#7a8fa6;letter-spacing:1px;margin-bottom:8px">RECENTLY GRADED PICKS</div>
         <div id="accuracy-recent"></div>
       </div>
+
+      <!-- MY BETS DETAIL -->
       <div id="acc-view-bets" style="display:none">
-        <div style="font-size:10px;color:#445566;margin-bottom:12px">Your actual bet results &mdash; manual and from picks</div>
+        <div style="font-size:10px;color:#445566;margin-bottom:12px">Bets you placed &mdash; resolved manually or auto-graded from scores</div>
         <div id="bet-accuracy-summary" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px"></div>
         <div id="bet-accuracy-breakdown" style="background:#111825;border:1px solid #1a2a3a;border-radius:14px;padding:14px;margin-bottom:14px"></div>
         <div style="font-size:10px;color:#7a8fa6;letter-spacing:1px;margin-bottom:8px">RECENT BETS</div>
@@ -1574,6 +1624,8 @@ var currentAccuracyView = 'ai';
 
 var historyData = JSON.parse(localStorage.getItem('betHistory') || 'null') || [];
 var pendingBets = JSON.parse(localStorage.getItem('pendingBets') || '[]');
+// Clean contaminated pickAccuracy (old resolveBet bug wrote wins into it)
+(function(){ if(!localStorage.getItem('pa_cleaned_v1')){ localStorage.removeItem('pickAccuracy'); localStorage.setItem('pa_cleaned_v1','1'); } })();
 var pickAccuracy = JSON.parse(localStorage.getItem('pickAccuracy') || '[]');
 var prevOddsSnapshot = JSON.parse(localStorage.getItem('prevOddsSnapshot') || '{}');
 var gameFlags = JSON.parse(localStorage.getItem('gameFlags') || '{}'); // {gameId: {injury_home, injury_away, fatigue_home, fatigue_away, note}}
@@ -2771,6 +2823,7 @@ function _ensureStats(){
   localStorage.setItem(migKey, '1');
 })();
 
+
 var teamStats = JSON.parse(localStorage.getItem('teamStatsCustom') || '{}');
 function getTeamStats(name){
   _ensureStats();
@@ -3453,22 +3506,13 @@ function resolveBet(bet,result,scoreData){
   }
   historyData.unshift({id:Date.now(),desc:bet.label+' ('+fmt(bet.odds)+')',type:bet.type||'ml',wager:bet.wager,result:result,payout:payout,date:gameDate,finalScore:finalScore});
   saveHistory();
-  // Grade matching accuracy entry by gameId + type, or team name fallback
-  var accResult=result==='Win'?'win':result==='Loss'?'loss':result==='Push'?'push':null;
-  if(accResult && bet.type){
-    var teamLower=(bet.team||'').toLowerCase();
-    var matched=pickAccuracy.find(function(a){
-      if(a.result) return false;
-      // Match by gameId + type first (most reliable)
-      if(bet.gameId && a.gameId && bet.gameId===a.gameId && a.type===bet.type) return true;
-      // Fallback: team name in pick string + same type
-      if(teamLower && a.type===bet.type && a.pick && a.pick.toLowerCase().indexOf(teamLower)>=0) return true;
-      return false;
-    });
-    if(matched){ matched.result=accResult; matched.gradedAt=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'}); savePickAccuracy(); renderAccuracyTab(); }
-  }
+  // NOTE: resolveBet does NOT touch pickAccuracy.
+  // AI Pick Accuracy is graded independently by gradePicksFromScores() from API scores.
+  // My Bets Accuracy comes from historyData only.
   pendingBets=pendingBets.filter(function(b){return b.id!==bet.id;});
   savePendingBetsStore(); updateBetsBadge(); renderPendingBets(); renderHistory();
+  // Refresh accuracy comparison header
+  if(currentAccuracyView) renderAccuracyTab();
 }
 function renderPendingBets(){
   var listEl=document.getElementById('pending-bets-list');
@@ -4061,6 +4105,7 @@ function switchAccuracyView(view){
     aiBtn.style.background='rgba(245,158,11,0.15)'; aiBtn.style.borderColor='#f59e0b'; aiBtn.style.color='#f59e0b';
     betsBtn.style.background='transparent'; betsBtn.style.borderColor='#2a3a4a'; betsBtn.style.color='#445566';
     aiView.style.display='block'; betsView.style.display='none';
+    renderAccuracyTab();
   } else {
     betsBtn.style.background='rgba(56,189,248,0.15)'; betsBtn.style.borderColor='#38bdf8'; betsBtn.style.color='#38bdf8';
     aiBtn.style.background='transparent'; aiBtn.style.borderColor='#2a3a4a'; aiBtn.style.color='#445566';
@@ -4069,6 +4114,44 @@ function switchAccuracyView(view){
   }
 }
 function renderAccuracyTab(){
+  // ── Update comparison header ──
+  var aiGraded=pickAccuracy.filter(function(a){return a.result;});
+  var aiWins=aiGraded.filter(function(a){return a.result==='win';}).length;
+  var aiLosses=aiGraded.filter(function(a){return a.result==='loss';}).length;
+  var aiTotal=aiWins+aiLosses+aiGraded.filter(function(a){return a.result==='push';}).length;
+  var aiPct=aiTotal?(aiWins/aiTotal*100).toFixed(1):'--';
+
+  var myBets=historyData.filter(function(h){return h.result==='Win'||h.result==='Loss'||h.result==='Push';});
+  var myWins=myBets.filter(function(h){return h.result==='Win';}).length;
+  var myLosses=myBets.filter(function(h){return h.result==='Loss';}).length;
+  var myTotal=myBets.length;
+  var myPct=myTotal?(myWins/myTotal*100).toFixed(1):'--';
+
+  var aiRateEl=document.getElementById('cmp-ai-rate');
+  var aiRecEl=document.getElementById('cmp-ai-rec');
+  var betsRateEl=document.getElementById('cmp-bets-rate');
+  var betsRecEl=document.getElementById('cmp-bets-rec');
+  var verdictEl=document.getElementById('cmp-verdict');
+
+  if(aiRateEl) aiRateEl.textContent=aiTotal?aiPct+'%':'--';
+  if(aiRateEl) aiRateEl.style.color=aiTotal&&parseFloat(aiPct)>=52.4?'#34d399':'#f97316';
+  if(aiRecEl) aiRecEl.textContent=aiTotal?aiWins+'-'+aiLosses:'No graded picks yet';
+
+  if(betsRateEl) betsRateEl.textContent=myTotal?myPct+'%':'--';
+  if(betsRateEl) betsRateEl.style.color=myTotal&&parseFloat(myPct)>=52.4?'#34d399':'#f97316';
+  if(betsRecEl) betsRecEl.textContent=myTotal?myWins+'-'+myLosses:'No bets logged yet';
+
+  if(verdictEl){
+    if(!aiTotal||!myTotal){ verdictEl.textContent='Place bets and picks will auto-grade when scores post'; verdictEl.style.color='#445566'; }
+    else {
+      var aiN=parseFloat(aiPct), myN=parseFloat(myPct);
+      var diff=Math.abs(aiN-myN).toFixed(1);
+      if(aiN>myN) { verdictEl.innerHTML='<span style="color:#f59e0b">AI picks outperforming your bets by '+diff+'%</span>'; }
+      else if(myN>aiN) { verdictEl.innerHTML='<span style="color:#38bdf8">Your bets outperforming AI picks by '+diff+'%</span>'; }
+      else { verdictEl.innerHTML='<span style="color:#7a8fa6">AI picks and your bets are even</span>'; }
+    }
+  }
+
   // AI PICKS view
   var graded=pickAccuracy.filter(function(a){return a.result;});
   var pending=pickAccuracy.filter(function(a){return !a.result;});
