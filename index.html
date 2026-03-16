@@ -2205,9 +2205,13 @@ async function quickBartRefresh(){
     return;
   }
 
-  setStatus('⏳ Asking Claude to fetch Barttorvik stats...');
+  setStatus('⏳ Asking Claude AI for current season stats... (15-30s)');
 
-  var prompt = 'Fetch the current Barttorvik team stats page at https://barttorvik.com/trank.php and return a JSON object (no markdown, no explanation, raw JSON only) mapping each team name to their stats. Include all teams. Each team entry should have these fields: ortg (adj offensive efficiency), drtg (adj defensive efficiency), barthag (T-Rank as decimal 0-1), efg (eFG% as number like 53.2), tov (turnover rate), orb (off reb rate), ftr (free throw rate), pace, ppg (points per game), record (like "28-5"), conf (conference abbreviation), wab (wins above bubble), sos (strength of schedule as decimal), ncsos (non-conf sos), proj_w (projected wins), proj_l (projected losses). Return ONLY the JSON object starting with { and ending with }. No other text.';
+  // Build the list of team names from our built-in DB so Claude knows exactly what to return
+  var knownTeams = getAllTeamNames ? getAllTeamNames() : [];
+  var teamListStr = knownTeams.length > 0 ? ('\n\nUpdate stats for these teams (use exact name spelling): ' + knownTeams.join(', ')) : '';
+
+  var prompt = 'You are a college basketball stats database. Return a JSON object (raw JSON only — no markdown, no explanation, no prose, just the JSON) mapping NCAA basketball team names to their current 2024-25 season Barttorvik/KenPom-style stats. Each team entry must have ALL of these numeric fields: ortg (adj offensive efficiency, typical range 90-130), drtg (adj defensive efficiency, typical range 88-120), barthag (T-Rank win probability vs avg D1 team, decimal 0.0-1.0), efg (effective FG% like 53.2), tov (turnover rate like 16.8), orb (offensive rebound rate like 28.5), ftr (free throw rate like 32.1), pace (possessions per 40 min like 68.4), ppg (points per game like 78.3), record (string like "28-5"), conf (conference abbreviation like "ACC", "SEC", "B12", "BE"), wab (wins above bubble, can be negative), sos (strength of schedule decimal like 0.1234), ncsos (non-conf SOS decimal like -0.0456), proj_w (projected wins integer), proj_l (projected losses integer). Use your knowledge of the current 2024-25 NCAA season. Return ONLY valid JSON starting with { and ending with }. No other text whatsoever.' + teamListStr;
 
   try{
     var resp = await claudeFetchWithRetry('https://api.anthropic.com/v1/messages', {
@@ -2220,7 +2224,7 @@ async function quickBartRefresh(){
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 8000,
+        max_tokens: 16000,
         messages: [{role:'user', content: prompt}]
       })
     });
