@@ -569,42 +569,10 @@ button{cursor:pointer}
 
       <!-- Edit + Bulk Import -->
       <div style="margin-top:16px">
-        <button onclick="toggleEditPanel()" style="width:100%;padding:9px;background:transparent;border:1px solid #2a3a4a;border-radius:8px;color:#667788;font-size:11px;font-weight:700;letter-spacing:1px">&#9999; EDIT TEAM STATS</button>
-        <div id="edit-panel" style="display:none;margin-top:10px">
-          <input id="edit-search" type="text" placeholder="Search team to edit..." oninput="searchEditTeam(this.value)" style="width:100%;background:#111825;border:1px solid #1e2e40;border-radius:10px;color:#e0e6f0;padding:11px 13px;font-size:14px;margin-bottom:8px"/>
-          <div id="edit-results"></div>
-          <div id="edit-form"></div>
+        
         </div>
       </div>
-      <div style="margin-top:10px">
-        <div style="font-size:12px;color:#94a3b8;line-height:1.8">
-              1. Go to <a href="https://barttorvik.com/trank.php" target="_blank" style="color:#38bdf8">barttorvik.com</a><br/>
-              2. Find each team - note AdjOE, AdjDE, Tempo, Exp<br/>
-              3. Optionally add ATS record and 3pt rate<br/>
-              4. Paste below - one team per line:<br/>
-              <code style="color:#f59e0b;font-size:11px;background:#080c17;padding:4px 8px;border-radius:4px;display:block;margin-top:6px">Team, AdjOE, AdjDE, Tempo, Exp, ATS_W, ATS_L, 3PR</code>
-              <span style="font-size:10px;color:#445566">Exp = experience 0-4 | 3PR = three-point attempt rate<br/>ATS = against-the-spread record (optional)</span>
-            </div>
-          </div>
-          <div style="background:#111825;border:1px solid #1a2a3a;border-radius:10px;padding:12px;margin-bottom:10px">
-            <div style="font-size:10px;color:#f59e0b;letter-spacing:2px;margin-bottom:6px">QUICK ADD - SINGLE TEAM</div>
-            <div style="display:flex;gap:6px;margin-bottom:6px">
-              <input id="bulk-name" type="text" placeholder="Team" style="flex:2;background:#080c17;border:1px solid #1e2e40;border-radius:6px;color:#fff;padding:7px 9px;font-size:12px"/>
-              <input id="bulk-ortg" type="number" placeholder="OrtG" style="flex:1;background:#080c17;border:1px solid #1e2e40;border-radius:6px;color:#fff;padding:7px 6px;font-size:12px"/>
-              <input id="bulk-drtg" type="number" placeholder="DrtG" style="flex:1;background:#080c17;border:1px solid #1e2e40;border-radius:6px;color:#fff;padding:7px 6px;font-size:12px"/>
-              <input id="bulk-tempo" type="number" placeholder="Pace" style="flex:1;background:#080c17;border:1px solid #1e2e40;border-radius:6px;color:#fff;padding:7px 6px;font-size:12px"/>
-            </div>
-            <button onclick="quickAddTeam()" style="width:100%;padding:7px;background:rgba(245,158,11,0.15);border:1px solid #f59e0b;border-radius:6px;color:#f59e0b;font-size:11px;font-weight:700;font-family:inherit">+ ADD TEAM</button>
-          </div>
-          <div style="font-size:10px;color:#818cf8;letter-spacing:1px;margin-bottom:6px">PASTE MULTIPLE TEAMS</div>
-          <textarea id="bulk-paste-area" placeholder="Duke, 118.2, 96.8, 71.8, 2.1, 14, 12, 38&#10;Kansas, 117.8, 98.4, 71.6, 1.8, 15, 11, 35&#10;..." style="width:100%;height:160px;background:#080c17;border:1px solid #3b4fd8;border-radius:8px;color:#e0e6f0;padding:10px;font-size:12px;font-family:'Courier New',monospace;resize:vertical;box-sizing:border-box"></textarea>
-          <div style="display:flex;gap:8px;margin-top:8px">
-            <button onclick="parseBulkImport()" style="flex:2;padding:10px;background:#818cf8;border:none;border-radius:8px;color:#080c17;font-size:12px;font-weight:700;font-family:inherit">IMPORT ALL TEAMS</button>
-            <button onclick="clearBulkCustomStats()" style="flex:1;padding:10px;background:transparent;border:1px solid #f97316;border-radius:8px;color:#f97316;font-size:11px;font-weight:700;font-family:inherit">RESET ALL</button>
-          </div>
-          <div id="bulk-import-result" style="margin-top:10px"></div>
-        </div>
-      </div>
+      >
     </div>
 
     <!-- BARTTORVIK PANEL -->
@@ -1332,42 +1300,9 @@ button{cursor:pointer}
 
       <!-- Edit + Bulk Import -->
       <div style="margin-top:16px">
-        <button onclick="toggleEditPanel()" style="width:100%;padding:9px;background:transparent;border:1px solid #2a3a4a;border-radius:8px;color:#667788;font-size:11px;font-weight:700;letter-spacing:1px">&#9999; EDIT TEAM STATS</button>
-        <div id="edit-panel" style="display:none;margin-top:10px">
-          <input id="edit-search" type="text" placeholder="Search team to edit..." oninput="searchEditTeam(this.value)" style="width:100%;background:#111825;border:1px solid #1e2e40;border-radius:10px;color:#e0e6f0;padding:11px 13px;font-size:14px;margin-bottom:8px"/>
-          <div id="edit-results"></div>
-          <div id="edit-form"></div>
         </div>
       </div>
-      <div style="margin-top:10px">
-        <div style="font-size:12px;color:#94a3b8;line-height:1.8">
-              1. Go to <a href="https://barttorvik.com/trank.php" target="_blank" style="color:#38bdf8">barttorvik.com</a><br/>
-              2. Find each team - note AdjOE, AdjDE, Tempo, Exp<br/>
-              3. Optionally add ATS record and 3pt rate<br/>
-              4. Paste below - one team per line:<br/>
-              <code style="color:#f59e0b;font-size:11px;background:#080c17;padding:4px 8px;border-radius:4px;display:block;margin-top:6px">Team, AdjOE, AdjDE, Tempo, Exp, ATS_W, ATS_L, 3PR</code>
-              <span style="font-size:10px;color:#445566">Exp = experience 0-4 | 3PR = three-point attempt rate<br/>ATS = against-the-spread record (optional)</span>
-            </div>
-          </div>
-          <div style="background:#111825;border:1px solid #1a2a3a;border-radius:10px;padding:12px;margin-bottom:10px">
-            <div style="font-size:10px;color:#f59e0b;letter-spacing:2px;margin-bottom:6px">QUICK ADD - SINGLE TEAM</div>
-            <div style="display:flex;gap:6px;margin-bottom:6px">
-              <input id="bulk-name" type="text" placeholder="Team" style="flex:2;background:#080c17;border:1px solid #1e2e40;border-radius:6px;color:#fff;padding:7px 9px;font-size:12px"/>
-              <input id="bulk-ortg" type="number" placeholder="OrtG" style="flex:1;background:#080c17;border:1px solid #1e2e40;border-radius:6px;color:#fff;padding:7px 6px;font-size:12px"/>
-              <input id="bulk-drtg" type="number" placeholder="DrtG" style="flex:1;background:#080c17;border:1px solid #1e2e40;border-radius:6px;color:#fff;padding:7px 6px;font-size:12px"/>
-              <input id="bulk-tempo" type="number" placeholder="Pace" style="flex:1;background:#080c17;border:1px solid #1e2e40;border-radius:6px;color:#fff;padding:7px 6px;font-size:12px"/>
-            </div>
-            <button onclick="quickAddTeam()" style="width:100%;padding:7px;background:rgba(245,158,11,0.15);border:1px solid #f59e0b;border-radius:6px;color:#f59e0b;font-size:11px;font-weight:700;font-family:inherit">+ ADD TEAM</button>
-          </div>
-          <div style="font-size:10px;color:#818cf8;letter-spacing:1px;margin-bottom:6px">PASTE MULTIPLE TEAMS</div>
-          <textarea id="bulk-paste-area" placeholder="Duke, 118.2, 96.8, 71.8, 2.1, 14, 12, 38&#10;Kansas, 117.8, 98.4, 71.6, 1.8, 15, 11, 35&#10;..." style="width:100%;height:160px;background:#080c17;border:1px solid #3b4fd8;border-radius:8px;color:#e0e6f0;padding:10px;font-size:12px;font-family:'Courier New',monospace;resize:vertical;box-sizing:border-box"></textarea>
-          <div style="display:flex;gap:8px;margin-top:8px">
-            <button onclick="parseBulkImport()" style="flex:2;padding:10px;background:#818cf8;border:none;border-radius:8px;color:#080c17;font-size:12px;font-weight:700;font-family:inherit">IMPORT ALL TEAMS</button>
-            <button onclick="clearBulkCustomStats()" style="flex:1;padding:10px;background:transparent;border:1px solid #f97316;border-radius:8px;color:#f97316;font-size:11px;font-weight:700;font-family:inherit">RESET ALL</button>
-          </div>
-          <div id="bulk-import-result" style="margin-top:10px"></div>
-        </div>
-      </div>
+      >
     </div>
 
     <!-- BARTTORVIK PANEL -->
@@ -3064,17 +2999,12 @@ function showTeamStats(name){
       +(s.fun!=null?'<span style="background:#1a2535;border:1px solid #f59e0b33;border-radius:12px;padding:2px 8px;font-size:9px;color:#f59e0b" title="FUN score = pace-adjusted entertainment rating">&#127942; '+s.fun.toFixed(0)+'</span>':'')
       +'</div>':'')
     +'<div style="font-size:9px;color:#f59e0b;letter-spacing:2px;margin-bottom:8px">FOUR FACTORS</div>'
-    +factorRow('Eff. FG%',s.efg.toFixed(1)+'%','Higher = better shooting efficiency')
-    +factorRow('Turnover Rate',s.tov.toFixed(1)+'%','Lower = fewer turnovers')
-    +factorRow('Off. Reb. Rate',s.orb.toFixed(1)+'%','Higher = more second chances')
-    +factorRow('FT Rate',s.ftr.toFixed(1)+'%','Higher = gets to the line more')
-    +factorRow('Pace',s.pace.toFixed(1),'Possessions per 40 min')
-    +'<div style="font-size:9px;color:#f59e0b;letter-spacing:2px;margin-top:12px;margin-bottom:8px">BETTING FACTORS</div>'
-    +'<div style="display:flex;gap:8px;margin-bottom:4px">'
-    +'<div style="flex:1;background:#080c17;border-radius:8px;padding:9px 7px;text-align:center"><div style="font-size:8px;color:#7a8fa6;margin-bottom:3px">EXPERIENCE</div><div style="font-size:14px;font-weight:700;color:'+expColor+'">'+expLabel+'</div><div style="font-size:9px;color:#556677">'+s.exp.toFixed(1)+'/4.0</div></div>'
-    +'<div style="flex:1;background:#080c17;border-radius:8px;padding:9px 7px;text-align:center"><div style="font-size:8px;color:#7a8fa6;margin-bottom:3px">3PT RATE</div><div style="font-size:14px;font-weight:700;color:'+tprColor+'">'+tprLabel+'</div><div style="font-size:9px;color:#556677">'+(s.tpr>=40?'high variance':s.tpr>=35?'moderate':'low variance')+'</div></div>'
-    
-    +'</div>'
+    +(s.efg!=null?factorRow('Eff. FG%',s.efg.toFixed(1)+'%','Higher = better shooting efficiency'):'')
+    +(s.tov!=null?factorRow('Turnover Rate',s.tov.toFixed(1)+'%','Lower = fewer turnovers'):'')
+    +(s.orb!=null?factorRow('Off. Reb. Rate',s.orb.toFixed(1)+'%','Higher = more second chances'):'')
+    +(s.ftr!=null?factorRow('FT Rate',s.ftr.toFixed(1)+'%','Higher = gets to the line more'):'')
+    +(s.pace!=null?factorRow('Pace',s.pace.toFixed(1),'Possessions per 40 min'):'')
+
     +'</div></div>';
 }
 function statPill(label,val,color){
@@ -3170,8 +3100,6 @@ function runMatchup(){
     {label:'FT RATE',key:'ftr',t1:s1.ftr,t2:s2.ftr,higherBetter:true,desc:'Free throw attempts per field goal attempt'},
     // ── STYLE ──
     {label:'PACE',key:'pace',t1:s1.pace!=null?+(s1.pace).toFixed(1):null,t2:s2.pace!=null?+(s2.pace).toFixed(1):null,higherBetter:true,desc:'Possessions per 40 minutes',section:'STYLE'},
-    {label:'3PT RATE',key:'tpr',t1:s1.tpr||35,t2:s2.tpr||35,higherBetter:false,desc:'3-point attempt rate — higher means more variance'},
-    {label:'EXPERIENCE',key:'exp',t1:s1.exp||0,t2:s2.exp||0,higherBetter:true,desc:'Roster experience/continuity (0-4 scale)'},
     {label:'FUN FACTOR',key:'fun',t1:s1.fun!=null?+(s1.fun).toFixed(3):null,t2:s2.fun!=null?+(s2.fun).toFixed(3):null,higherBetter:true,desc:'Barttorvik pace/style signature score'},
   ];  // show all rows; fmtVal handles null as "--"
   var t1Edge=0,t2Edge=0;
@@ -3238,10 +3166,6 @@ function runMatchup(){
 // ============================================================
 // EDIT TEAM / BULK IMPORT
 // ============================================================
-function toggleEditPanel(){
-  editPanelOpen=!editPanelOpen;
-  document.getElementById('edit-panel').style.display=editPanelOpen?'block':'none';
-}
 function searchEditTeam(val){
   var res=document.getElementById('edit-results');
   if(val.length<2){res.innerHTML='';return;}
