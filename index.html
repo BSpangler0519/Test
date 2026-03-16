@@ -4279,8 +4279,8 @@ function saveAnalysisCache(){ localStorage.setItem('analysisCache',JSON.stringif
 // Purge analysis cache entries older than 24 hours on load
 (function(){var now=Date.now();Object.keys(analysisCache).forEach(function(k){if(now-(analysisCache[k].ts||0)>86400000)delete analysisCache[k];});saveAnalysisCache();})();
 function saveHistory(){ localStorage.setItem('betHistory',JSON.stringify(historyData)); }
-function clearHistory(){ if(!confirm('Delete all bet history?')) return; historyData=[]; saveHistory(); renderHistory(); }
-function deleteHistoryItem(id){ historyData=historyData.filter(function(h){return h.id!==id;}); saveHistory(); renderHistory(); }
+function clearHistory(){ if(!confirm('Delete all bet history?')) return; historyData=[]; saveHistory(); renderHistory(); renderAccuracyTab(); renderBetAccuracy(); }
+function deleteHistoryItem(id){ historyData=historyData.filter(function(h){return h.id!==id;}); saveHistory(); renderHistory(); renderAccuracyTab(); renderBetAccuracy(); }
 function addHistoryPrompt(){
   var desc=prompt('Bet description (e.g. Duke ML -145):');
   if(!desc) return;
