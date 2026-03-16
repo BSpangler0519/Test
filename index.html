@@ -3955,7 +3955,28 @@ function renderPicks(){
       +kellyHtml
       +(!p.isParlay?'<div style="display:flex;gap:6px;margin-top:8px">'
         +'<button onclick="addPickToSlip(this)" data-key="pick-'+(p.game&&p.game.id?p.game.id:'x')+'-'+p.type+'" data-label="'+p.pick.replace(/"/g,'&quot;')+'" data-odds="'+p.odds+'" style="flex:1;padding:6px 8px;background:transparent;border:1px solid '+col+'44;border-radius:7px;color:'+col+';font-size:10px;font-weight:700;font-family:inherit">+ SLIP</button>'
-        +(function(){var gid=p.game&&p.game.id?JSON.stringify(p.game.id):'null';var pt=JSON.stringify(p.type||'ml');var aw=p.game&&p.game.away?JSON.stringify(p.game.away):'""';var hm=p.game&&p.game.home?JSON.stringify(p.game.home):'""';var ct=JSON.stringify(p.game&&p.game.commence_time||'');var sp=p.type==='spread'&&p.game&&p.game.spread!=null?p.game.spread:'null';var tot=p.type==='ou'&&p.game&&p.game.total!=null?p.game.total:'null';var ou=p.type==='ou'?JSON.stringify(p.pick.toLowerCase().indexOf('over')>=0?'over':'under'):'null';return '<button onclick="addPickBet('+gid+','+pt+','+aw+','+hm+','+ct+','+p.odds+','+sp+','+tot+','+ou+')"'+'  style="flex:1;padding:6px 8px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.4);border-radius:7px;color:#f59e0b;font-size:10px;font-weight:700;font-family:inherit">+ BET</button>';})()
+        +(function(){
+  var gid = (p.game&&p.game.id)||'';
+  var pt  = p.type||'ml';
+  var aw  = (p.game&&p.game.away)||'';
+  var hm  = (p.game&&p.game.home)||'';
+  var ct  = (p.game&&p.game.commence_time)||'';
+  var sp  = (p.type==='spread'&&p.game&&p.game.spread!=null) ? p.game.spread : 'null';
+  var tot = (p.type==='ou'&&p.game&&p.game.total!=null) ? p.game.total : 'null';
+  var ou  = (p.type==='ou') ? (p.pick.toLowerCase().indexOf('over')>=0?'over':'under') : 'null';
+  var esc = function(s){ return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); };
+  return '<button onclick="handlePickBet(this)"'
+    +' data-gid="'+esc(gid)+'"'
+    +' data-pt="'+esc(pt)+'"'
+    +' data-aw="'+esc(aw)+'"'
+    +' data-hm="'+esc(hm)+'"'
+    +' data-ct="'+esc(ct)+'"'
+    +' data-odds="'+p.odds+'"'
+    +' data-sp="'+sp+'"'
+    +' data-tot="'+tot+'"'
+    +' data-ou="'+esc(ou)+'"'
+    +' style="flex:1;padding:6px 8px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.4);border-radius:7px;color:#f59e0b;font-size:10px;font-weight:700;font-family:inherit">+ BET</button>';
+})()
         +'</div>':'')
       +'</div>';
   }).join('');
@@ -3981,6 +4002,18 @@ function addPickBet(gameId, ptype, away, home, commenceTime, odds, spread, total
       team:away, opponent:home, odds:odds,
       spread:spread||null, total:total||null, ouSide:ouSide||null});
   }
+}
+function handlePickBet(btn){
+  var gameId = btn.getAttribute('data-gid') || null;
+  var ptype  = btn.getAttribute('data-pt')  || 'ml';
+  var away   = btn.getAttribute('data-aw')  || '';
+  var home   = btn.getAttribute('data-hm')  || '';
+  var ct     = btn.getAttribute('data-ct')  || '';
+  var odds   = parseFloat(btn.getAttribute('data-odds')) || -110;
+  var sp     = btn.getAttribute('data-sp');   sp  = (sp  && sp  !== 'null') ? parseFloat(sp)  : null;
+  var tot    = btn.getAttribute('data-tot');  tot = (tot && tot !== 'null') ? parseFloat(tot) : null;
+  var ou     = btn.getAttribute('data-ou');   ou  = (ou  && ou  !== 'null') ? ou : null;
+  addPickBet(gameId, ptype, away, home, ct, odds, sp, tot, ou);
 }
 function addPickToSlip(btn){
   var key=btn.getAttribute('data-key');
