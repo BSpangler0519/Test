@@ -3837,7 +3837,7 @@ async function generatePicks(){
         else if(spreadEdge<-3){spreadPick=g.away+' +'+(Math.abs(g.spread));spreadReason='Projected margin '+expectedMargin.toFixed(1)+' pts &mdash; '+g.away+' covers '+Math.abs(g.spread)+' pt spread';}
         if(spreadPick){
           var ss=edgeToStars(Math.abs(spreadEdge),3,6,10);
-          allPicks.push({type:'spread',typeLabel:'SPREAD',game:g,pick:spreadPick,odds:g.spreadOdds,stars:ss,edge:spreadEdge.toFixed(1),reason:spreadReason,projMargin:adjustedMargin.toFixed(1),sortScore:100+Math.abs(spreadEdge)*ss});
+          allPicks.push({type:'spread',typeLabel:'SPREAD',game:g,pick:spreadPick,odds:g.spreadOdds,stars:ss,edge:spreadEdge.toFixed(1),reason:spreadReason,projMargin:expectedMargin.toFixed(1),sortScore:100+Math.abs(spreadEdge)*ss});
         }
       }
       if(g.total!=null){
