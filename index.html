@@ -268,6 +268,15 @@ button{cursor:pointer}
     <div id="odds-loading" class="empty" style="display:none">Fetching live odds...</div>
     
 
+    <!-- Game Search -->
+    <div id="game-search-row" style="display:none;margin-bottom:10px;position:relative">
+      <input id="game-search-input" type="text" placeholder="&#128269; Search teams..." 
+        oninput="filterGamesBySearch(this.value)"
+        style="width:100%;background:#111825;border:1px solid #1e2e40;border-radius:10px;color:#e0e6f0;padding:10px 36px 10px 13px;font-size:13px;box-sizing:border-box"/>
+      <button onclick="document.getElementById('game-search-input').value='';filterGamesBySearch('')" 
+        style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:#445566;font-size:16px;cursor:pointer;padding:0;line-height:1">&#x2715;</button>
+    </div>
+
     <!-- Bookmaker Selector -->
     <div id="book-selector-row" style="display:none;margin-bottom:10px">
       <div style="font-size:9px;color:#7a8fa6;letter-spacing:1px;margin-bottom:6px">BOOKMAKER</div>
@@ -1026,6 +1035,15 @@ button{cursor:pointer}
     <div id="odds-error" style="display:none"></div>
     <div id="odds-loading" class="empty" style="display:none">Fetching live odds...</div>
     
+
+    <!-- Game Search -->
+    <div id="game-search-row" style="display:none;margin-bottom:10px;position:relative">
+      <input id="game-search-input" type="text" placeholder="&#128269; Search teams..." 
+        oninput="filterGamesBySearch(this.value)"
+        style="width:100%;background:#111825;border:1px solid #1e2e40;border-radius:10px;color:#e0e6f0;padding:10px 36px 10px 13px;font-size:13px;box-sizing:border-box"/>
+      <button onclick="document.getElementById('game-search-input').value='';filterGamesBySearch('')" 
+        style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:#445566;font-size:16px;cursor:pointer;padding:0;line-height:1">&#x2715;</button>
+    </div>
 
     <!-- Bookmaker Selector -->
     <div id="book-selector-row" style="display:none;margin-bottom:10px">
@@ -2316,6 +2334,7 @@ function buildBookSelector(games){
   availableBooks = Object.keys(books).map(function(k){return{key:k,title:books[k]};});
   if(availableBooks.length <= 1){ document.getElementById('book-selector-row').style.display='none'; return; }
   document.getElementById('book-selector-row').style.display='block';
+    document.getElementById('game-search-row').style.display='block';
   // If preferred book not in response, fall back to 'all' silently
   var preferred=localStorage.getItem('preferredBook')||'all';
   var prefAvail=preferred==='all'||availableBooks.some(function(b){return b.key===preferred;});
@@ -2392,6 +2411,26 @@ function getLineMovement(gameId,field,current){
 // ============================================================
 // ODDS API
 // ============================================================
+function filterGamesBySearch(val){
+  var q = (val||'').toLowerCase().trim();
+  if(!q){ renderFilteredGames(); return; }
+  var filtered = allGamesData.filter(function(g){
+    return g.home.toLowerCase().indexOf(q)>-1 || g.away.toLowerCase().indexOf(q)>-1;
+  });
+  var countEl = document.getElementById('odds-game-count');
+  if(countEl) countEl.textContent = filtered.length + ' game' + (filtered.length!==1?'s':'') + ' found';
+  if(!filtered.length){
+    document.getElementById('odds-list').innerHTML='<div class="empty">No games match "'+val+'"</div>';
+    return;
+  }
+  renderGames(filtered);
+  // Scroll to first result
+  setTimeout(function(){
+    var first = document.getElementById('game-card-'+filtered[0].id);
+    if(first) first.scrollIntoView({behavior:'smooth', block:'start'});
+  }, 50);
+}
+
 function filterOdds(f){
   currentOddsFilter=f;
   document.querySelectorAll('.odds-filter').forEach(function(b){
@@ -2604,7 +2643,7 @@ function renderGames(games){
     var spLabel=g.spread!=null?shortName(g.home)+' '+fmt(g.spread):'N/A';
     var totLabel=g.total!=null?''+g.total:'N/A';
     var badge=g.isTournament?'<span style="font-size:8px;color:#f59e0b;background:rgba(245,158,11,0.2);border:1px solid rgba(245,158,11,0.4);border-radius:6px;padding:2px 6px;margin-left:6px;font-weight:700;vertical-align:middle">TOURNEY</span>':'';
-    html+='<div class="card">'
+    html+='<div class="card" id="game-card-'+g.id+'">'  
       +'<div class="card-header"><span class="book">'+g.book+badge+'</span><span class="time">'+g.date+' &middot; '+g.time+'</span></div>'
       +'<div class="card-body">'
       +'<div class="team-row">'
@@ -3238,7 +3277,91 @@ function runMatchup(){
     +'</div>'
     +valueHTML
     +'</div></div>';
+  // Add Claude analysis button at the bottom
+  html += '<div id="matchup-claude-section" style="margin-top:12px">'
+        + '<button onclick="runMatchupClaude()" id="matchup-claude-btn" style="width:100%;padding:11px;background:linear-gradient(135deg,rgba(129,140,248,0.15),rgba(129,140,248,0.08));border:1px solid #818cf8;border-radius:10px;color:#818cf8;font-size:12px;font-weight:700;font-family:inherit;letter-spacing:1px">&#129302; ASK CLAUDE TO ANALYZE THIS MATCHUP</button>'
+        + '<div id="matchup-claude-loading" style="display:none;text-align:center;padding:12px;font-size:12px;color:#818cf8">&#129302; Analyzing matchup<span id="matchup-claude-dots">&#9679;</span></div>'
+        + '<div id="matchup-claude-result" style="display:none;background:#111825;border:1px solid #3b4fd8;border-radius:12px;padding:14px;margin-top:10px;font-size:12px;color:#a0b4c8;line-height:1.7"></div>'
+        + '</div>';
   document.getElementById('matchup-result').innerHTML=html;
+  // Store current matchup teams for Claude
+  window._matchupTeam1 = matchupTeam1;
+  window._matchupTeam2 = matchupTeam2;
+  window._matchupS1 = s1;
+  window._matchupS2 = s2;
+}
+
+
+async function runMatchupClaude(){
+  if(!CLAUDE_KEY){
+    document.getElementById('matchup-claude-result').style.display='block';
+    document.getElementById('matchup-claude-result').innerHTML='<span style="color:#f59e0b">No Claude API key. Go to TOOLS &rarr; KEYS.</span>';
+    return;
+  }
+  var t1 = window._matchupTeam1, t2 = window._matchupTeam2;
+  var s1 = window._matchupS1, s2 = window._matchupS2;
+  if(!t1||!t2){ return; }
+
+  var btn = document.getElementById('matchup-claude-btn');
+  if(btn) btn.style.display='none';
+  document.getElementById('matchup-claude-loading').style.display='block';
+
+  var dotFrames=['&#9679;','&#9679; &#9679;','&#9679; &#9679; &#9679;'],dotIdx=0;
+  var dotTimer=setInterval(function(){var el=document.getElementById('matchup-claude-dots');if(el){el.innerHTML=dotFrames[dotIdx%3];dotIdx++;}},500);
+
+  function sl(name,s){
+    if(!s) return name+': no stats in database';
+    return name+': OrtG='+s.ortg.toFixed(1)+', DrtG='+s.drtg.toFixed(1)+', Pace='+s.pace.toFixed(1)
+      +', EFG='+s.efg+'%, D-EFG='+(s.defg!=null?s.defg+'%':'n/a')
+      +', TOV='+s.tov+'%, ORB='+s.orb+'%, FTR='+s.ftr+'%'
+      +(s.barthag!=null?', T-Rank='+(s.barthag*100).toFixed(1):'')
+      +(s.exp!=null?', Exp='+s.exp.toFixed(1):'')
+      +(s.wab!=null?', WAB='+s.wab.toFixed(1):'');
+  }
+
+  var net1 = s1?s1.ortg-s1.drtg:null, net2 = s2?s2.ortg-s2.drtg:null;
+  var projMargin = net1&&net2?((net1-net2)*0.9).toFixed(1):null;
+  var projTotal = null;
+  if(s1&&s2){
+    var avgPoss=(s1.pace+s2.pace)/2;
+    projTotal=((s1.ortg+s2.drtg)/2/100*avgPoss+(s2.ortg+s1.drtg)/2/100*avgPoss).toFixed(1);
+  }
+
+  var prompt = 'You are a sharp NCAA basketball betting analyst. Analyze this matchup for betting value.\n\n'
+    +'Matchup: '+t2+' vs '+t1+' (neutral site — NCAA Tournament, no home court advantage)\n\n'
+    +'Team stats:\n'+sl(t1,s1)+'\n'+sl(t2,s2)+'\n'
+    +(projMargin?'\nProjected margin: '+t1+' by '+projMargin+' pts (stats model)':'')
+    +(projTotal?'\nProjected total: '+projTotal+' pts':'')
+    +'\n\nIMPORTANT: Use ONLY the stats above. Do not use your own historical knowledge to override projections. NCAA Tournament = neutral site, no home court.\n\n'
+    +'Provide a 5-6 sentence analysis: (1) which team has the edge and why, (2) spread value based on projected margin, (3) over/under based on projected total, (4) key matchup factor, (5) recommended bet with confidence.';
+
+  try{
+    var resp = await claudeFetchWithRetry('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':CLAUDE_KEY,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:600,messages:[{role:'user',content:prompt}]})
+    });
+    clearInterval(dotTimer);
+    document.getElementById('matchup-claude-loading').style.display='none';
+    if(!resp.ok){ throw new Error('API error '+resp.status); }
+    var data = await resp.json();
+    var text = data.content&&data.content[0]&&data.content[0].text?data.content[0].text:'No response.';
+    var resultEl = document.getElementById('matchup-claude-result');
+    resultEl.style.display='block';
+    resultEl.innerHTML='<div style="font-size:9px;color:#818cf8;letter-spacing:2px;margin-bottom:8px">&#129302; CLAUDE ANALYSIS</div>'
+      +text.replace(/\*\*(.*?)\*\*/g,'<strong style="color:#fff">$1</strong>').replace(/\n\n/g,'<br/><br/>').replace(/\n/g,'<br/>');
+    // Show re-analyze button
+    var btn2=document.getElementById('matchup-claude-btn');
+    if(btn2){ btn2.style.display='block'; btn2.textContent='&#129302; RE-ANALYZE'; }
+  }catch(e){
+    clearInterval(dotTimer);
+    document.getElementById('matchup-claude-loading').style.display='none';
+    var resultEl=document.getElementById('matchup-claude-result');
+    resultEl.style.display='block';
+    resultEl.innerHTML='<span style="color:#f97316">Error: '+e.message+'</span>';
+    var btn2=document.getElementById('matchup-claude-btn');
+    if(btn2) btn2.style.display='block';
+  }
 }
 
 // ============================================================
@@ -4532,9 +4655,17 @@ function clearAnalysisCache(){
 }
 
 function closeGameAnalysis(){
+  var gameId = currentAnalysisGame ? currentAnalysisGame.id : null;
   document.getElementById('game-analysis-modal').style.display='none';
   document.body.style.overflow='';
   currentAnalysisGame = null;
+  // Scroll back to the game card
+  if(gameId){
+    setTimeout(function(){
+      var el = document.getElementById('game-card-'+gameId);
+      if(el) el.scrollIntoView({behavior:'smooth', block:'center'});
+    }, 100);
+  }
 }
 
 function saveGameFlag(){
