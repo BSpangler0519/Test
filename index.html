@@ -2802,25 +2802,31 @@ function _ensureStats(){
 
 
 
-// ── MIGRATE v2: force-clear ALL four-factor fields from localStorage ──
-// The built-in DB now has real Barttorvik four-factors for 68 teams.
-// Old localStorage entries had estimated values (tov=13.5, orb=30.5/33) 
-// that override the DB. Clear them all so DB values are used.
+// ── MIGRATE v4: remove ALL localStorage overrides for teams that have full DB data ──
+// The built-in DB now has complete Barttorvik data for all 68 teams.
+// Any localStorage entry with placeholder ortg=105/drtg=105/pace=68 must be cleared
+// so the real DB values are used. Also clears all old four-factor overrides.
 (function(){
-  var migKey = 'ff_migrated_v3';
-  if(localStorage.getItem(migKey)) return; // already ran
+  var migKey = 'ff_migrated_v4';
+  if(localStorage.getItem(migKey)) return;
   var custom = JSON.parse(localStorage.getItem('teamStatsCustom') || '{}');
   var changed = false;
+  // Fields that should come from DB, not localStorage
+  var dbFields = ['ortg','drtg','barthag','pace','efg','defg','ftr','tov','orb',
+                  'exp','talent','tpr','tp','dtp','blk','ast','dtov','dorb',
+                  'avg_hgt','eff_hgt','elite_sos','record','ppg'];
   Object.keys(custom).forEach(function(team){
     var s = custom[team];
-    // Always clear four-factor fields — let DB provide them
-    if('efg' in s || 'tov' in s || 'orb' in s || 'ftr' in s || 'exp' in s){
-      delete s.efg; delete s.tov; delete s.orb; delete s.ftr;
-      changed = true;
-    }
+    var hadAny = false;
+    dbFields.forEach(function(f){ if(f in s){ delete s[f]; hadAny=true; } });
+    // If team entry is now empty (only had DB fields), remove it entirely
+    if(hadAny && Object.keys(s).length === 0){ delete custom[team]; }
+    if(hadAny) changed = true;
   });
   if(changed) localStorage.setItem('teamStatsCustom', JSON.stringify(custom));
   localStorage.setItem(migKey, '1');
+  // Also clear old migration keys
+  localStorage.removeItem('ff_migrated_v3');
 })();
 
 
