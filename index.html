@@ -3416,29 +3416,35 @@ async function runMatchupClaude(){
   }
 
   // Use live game data if available, fall back to manual inputs
-  var liveGame = window._matchupGame || null;
-  var ouTotal = liveGame && liveGame.total!=null ? liveGame.total
-    : parseFloat((document.getElementById('matchup-ou-total')||{}).value) || null;
-  var matchupSpread = liveGame && liveGame.spread!=null ? liveGame.spread
-    : parseFloat((document.getElementById('matchup-spread')||{}).value) || null;
+  // Find live game - try cached first, then search allGamesData directly
+  var liveGame = window._matchupGame;
+  if(!liveGame && typeof allGamesData !== 'undefined' && allGamesData.length){
+    var t1lc = t1.toLowerCase(), t2lc = t2.toLowerCase();
+    liveGame = allGamesData.find(function(g){
+      var hl=g.home.toLowerCase(), al=g.away.toLowerCase();
+      return (fuzzyTeamMatch(t1lc,hl)||fuzzyTeamMatch(t1lc,al))
+          && (fuzzyTeamMatch(t2lc,hl)||fuzzyTeamMatch(t2lc,al));
+    }) || null;
+    if(liveGame) window._matchupGame = liveGame;
+  }
+
+  var ouTotal = liveGame && liveGame.total!=null ? liveGame.total : null;
+  var matchupSpread = liveGame && liveGame.spread!=null ? liveGame.spread : null;
   var spreadOdds = liveGame ? (liveGame.spreadOdds || -110) : -110;
   var totalOdds  = liveGame ? (liveGame.totalOdds  || -110) : -110;
-  var odds1val = liveGame ? liveGame.homeML : (parseInt((document.getElementById('matchup-odds1')||{}).value) || null);
-  var odds2val = liveGame ? liveGame.awayML : (parseInt((document.getElementById('matchup-odds2')||{}).value) || null);
-  // Determine which team in liveGame corresponds to t1 (matchupTeam1)
   var t1IsHome = liveGame ? fuzzyTeamMatch(t1.toLowerCase(), liveGame.home.toLowerCase()) : true;
   var t1Spread = matchupSpread!=null ? (t1IsHome ? matchupSpread : -matchupSpread) : null;
-  var t1ML = t1IsHome ? odds1val : odds2val;
-  var t2ML = t1IsHome ? odds2val : odds1val;
+  var odds1val = liveGame ? (t1IsHome ? liveGame.homeML : liveGame.awayML) : (parseInt((document.getElementById('matchup-odds1')||{}).value)||null);
+  var odds2val = liveGame ? (t1IsHome ? liveGame.awayML : liveGame.homeML) : (parseInt((document.getElementById('matchup-odds2')||{}).value)||null);
 
   var oddsCtx = '';
-  if(t1ML||t2ML) oddsCtx += '\nMoneyline: '+t1+' '+(t1ML?fmt(t1ML):'n/a')+' / '+t2+' '+(t2ML?fmt(t2ML):'n/a');
+  if(odds1val||odds2val) oddsCtx += '\nMoneyline: '+t1+' '+(odds1val?fmt(odds1val):'n/a')+' / '+t2+' '+(odds2val?fmt(odds2val):'n/a');
   if(t1Spread!=null) oddsCtx += '\nSpread: '+t1+' '+fmt(t1Spread)+' ('+fmt(spreadOdds)+')';
   if(ouTotal!=null) oddsCtx += '\nO/U Total: '+ouTotal+' ('+fmt(totalOdds)+')';
 
   var prompt = 'You are a sharp NCAA basketball betting analyst. Analyze this matchup for betting value.\n\n'
     +'Matchup: '+t2+' vs '+t1+' (neutral site — no home court advantage)'
-    +(oddsCtx?'\n\nCurrent lines:'+oddsCtx:'')
+    +(oddsCtx?'\n\nCurrent lines:'+oddsCtx:'\n\nNOTE: No live odds available. Analyze stats only, do NOT ask user for lines.')
     +'\n\nTeam stats:\n'+sl(t1,s1)+'\n'+sl(t2,s2)+'\n'
     +(projMargin?'\nModel projected margin: '+t1+' by '+projMargin+' pts'+(t1Spread!=null?' (vs spread '+fmt(t1Spread)+')':''):'')
     +(projTotal?'\nModel projected total: '+projTotal+' pts'+(ouTotal?' (vs posted O/U '+ouTotal+')':''):'')
@@ -3953,11 +3959,13 @@ function fuzzyTeamMatch(query, candidate){
   var qWords=q.split(/\s+/), cWords=c.split(/\s+/);
   var shorter=qWords.length<=cWords.length?qWords:cWords;
   var longer=qWords.length<=cWords.length?cWords:qWords;
-  // Only allow match if word counts differ by at most 1 (e.g. nickname suffix like "Jayhawks")
-  if(longer.length - shorter.length > 1) return false;
+  // Allow word count diff of up to 2 (e.g. "Duke" vs "Duke Blue Devils")
+  if(longer.length - shorter.length > 2) return false;
   // Shorter must be a contiguous prefix of longer
   var isPrefix=shorter.every(function(w,i){return w===longer[i];});
   if(isPrefix) return true;
+  // Single-word query: match if candidate starts with that word (e.g. "Duke" in "Duke Blue Devils")
+  if(shorter.length===1 && longer[0]===shorter[0]) return true;
   // Safe explicit alias pairs
   var aliasPairs=[
     ['north carolina','unc'],['connecticut','uconn'],['ohio state','ohio st'],
