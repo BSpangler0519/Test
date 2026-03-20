@@ -3440,10 +3440,16 @@ async function runMatchupClaude(){
     +'Matchup: '+t2+' vs '+t1+' (neutral site — no home court advantage)'
     +(oddsCtx?'\n\nCurrent lines:'+oddsCtx:'')
     +'\n\nTeam stats:\n'+sl(t1,s1)+'\n'+sl(t2,s2)+'\n'
-    +(projMargin?'\nModel projected margin: '+t1+' by '+projMargin+' pts':'')
-    +(projTotal?'\nModel projected total: '+projTotal+' pts'+(ouTotal?' (vs posted line '+ouTotal+')':''):'')
-    +'\n\nIMPORTANT: Use ONLY the stats and projections above. Do NOT override with your own historical projections. Neutral site — no home court.\n\n'
-    +'Respond in EXACTLY this format:\n'    +'[ANALYSIS]\n'    +'4-5 sentences: statistical edge, spread vs projected margin, O/U direction based on model total vs line, key factor.\n\n'    +'[RECOMMENDED BETS]\n'    +'- \u2705 [Pick] ([Odds]) | Confidence: X/10\n'    +'- \u2705 [Pick] ([Odds]) | Confidence: X/10\n'    +'List 1-3 best bets. Add \u2190 *stronger play* on the best one.';
+    +(projMargin?'\nModel projected margin: '+t1+' by '+projMargin+' pts'+(t1Spread!=null?' (vs spread '+fmt(t1Spread)+')':''):'')
+    +(projTotal?'\nModel projected total: '+projTotal+' pts'+(ouTotal?' (vs posted O/U '+ouTotal+')':''):'')
+    +'\n\nIMPORTANT: (1) The model margin is a raw efficiency estimate — compare it to the actual spread line to assess value, do not recommend the model margin as the bet. (2) Recommended bets MUST use the ACTUAL market lines shown above. (3) Neutral site — no home court. (4) Do not use historical knowledge.\n\n'
+    +'Respond in EXACTLY this format:\n'
+    +'[ANALYSIS]\n'
+    +'4-5 sentences: statistical edge, whether model margin supports or fades the spread, O/U direction based on model total vs posted line, key factor.\n\n'
+    +'[RECOMMENDED BETS]\n'
+    +'- \u2705 [Pick using ACTUAL market line] ([Odds from above]) | Confidence: X/10\n'
+    +'- \u2705 [Pick using ACTUAL market line] ([Odds from above]) | Confidence: X/10\n'
+    +'List 1-3 bets using actual market lines only. Add \u2190 *stronger play* on best one.';
   try{
     var resp = await claudeFetchWithRetry('https://api.anthropic.com/v1/messages',{
       method:'POST',
@@ -4904,7 +4910,7 @@ async function _runGameAnalysisInner(){
     +(projMargin?'\nProjected margin: '+g.home+' by '+projMargin+' pts (stats model)':'')
     +(projTotal?'\nProjected total: '+projTotal+' pts (vs line '+g.total+')':'')
     +flagContext
-    +'\n\nIMPORTANT: Use ONLY the stats and projections above. Do NOT override with historical knowledge. If model projects a total, treat it as authoritative. NCAA Tournament = neutral site.\n\nRespond in EXACTLY this format:\\n[ANALYSIS]\\n4-5 sentences: statistical edge, spread vs projected margin, O/U direction based on model total vs line, key factor, any flag concerns.\\n\\n[RECOMMENDED BETS]\\n- \u2705 [Pick] ([Odds]) | Confidence: X/10\\n- \u2705 [Pick] ([Odds]) | Confidence: X/10\\nList 1-3 best bets. Add \u2190 *stronger play* on the best one.';
+    +'\n\nIMPORTANT: (1) The model margin is a raw efficiency estimate — compare it to the actual spread to find value, do NOT recommend the model margin as the bet. (2) Recommended bets MUST use the ACTUAL market lines shown in the odds above. (3) NCAA Tournament = neutral site, no home court.\n\nRespond in EXACTLY this format:\n[ANALYSIS]\n4-5 sentences: statistical edge, whether model margin supports the spread, O/U direction based on model total vs posted line, key factor, flag concerns.\n\n[RECOMMENDED BETS]\n- \u2705 [Bet using ACTUAL line] ([Odds]) | Confidence: X/10\n- \u2705 [Bet using ACTUAL line] ([Odds]) | Confidence: X/10\nList 1-3 bets using actual market lines only. Add \u2190 *stronger play* on best one.';
   document.getElementById('game-analysis-loading').style.display='block';
   document.getElementById('game-analysis-content').innerHTML='';
   var dotFrames=['&#9679;','&#9679; &#9679;','&#9679; &#9679; &#9679;'],dotIdx=0;
