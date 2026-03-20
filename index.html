@@ -596,9 +596,13 @@ button{cursor:pointer}
         </div>
         <div style="background:#111825;border:1px solid #1a2a3a;border-radius:10px;padding:12px;margin-bottom:12px">
           <div style="font-size:9px;color:#f59e0b;letter-spacing:2px;margin-bottom:10px">CURRENT ODDS (optional)</div>
-          <div style="display:flex;gap:8px">
+          <div style="display:flex;gap:8px;margin-bottom:8px">
             <div style="flex:1"><div id="odds-label1" style="font-size:9px;color:#8aa0b8;margin-bottom:4px">TEAM 1 ML</div><input id="matchup-odds1" type="number" placeholder="-110" style="width:100%;background:#080c17;border:1px solid #1e2e40;border-radius:8px;color:#fff;padding:8px 10px;font-size:14px"/></div>
             <div style="flex:1"><div id="odds-label2" style="font-size:9px;color:#8aa0b8;margin-bottom:4px">TEAM 2 ML</div><input id="matchup-odds2" type="number" placeholder="+110" style="width:100%;background:#080c17;border:1px solid #1e2e40;border-radius:8px;color:#fff;padding:8px 10px;font-size:14px"/></div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <div style="flex:1"><div style="font-size:9px;color:#8aa0b8;margin-bottom:4px">SPREAD (Team 1)</div><input id="matchup-spread" type="number" step="0.5" placeholder="-3.5" style="width:100%;background:#080c17;border:1px solid #1e2e40;border-radius:8px;color:#fff;padding:8px 10px;font-size:14px"/></div>
+            <div style="flex:1"><div style="font-size:9px;color:#8aa0b8;margin-bottom:4px">O/U TOTAL</div><input id="matchup-ou-total" type="number" step="0.5" placeholder="168.5" style="width:100%;background:#080c17;border:1px solid #1e2e40;border-radius:8px;color:#fff;padding:8px 10px;font-size:14px"/></div>
           </div>
         </div>
         <button onclick="runMatchup()" style="width:100%;padding:12px;background:#f59e0b;border:none;border-radius:10px;color:#080c17;font-size:14px;font-weight:700;margin-bottom:14px">ANALYZE MATCHUP</button>
@@ -1380,9 +1384,13 @@ button{cursor:pointer}
         </div>
         <div style="background:#111825;border:1px solid #1a2a3a;border-radius:10px;padding:12px;margin-bottom:12px">
           <div style="font-size:9px;color:#f59e0b;letter-spacing:2px;margin-bottom:10px">CURRENT ODDS (optional)</div>
-          <div style="display:flex;gap:8px">
+          <div style="display:flex;gap:8px;margin-bottom:8px">
             <div style="flex:1"><div id="odds-label1" style="font-size:9px;color:#8aa0b8;margin-bottom:4px">TEAM 1 ML</div><input id="matchup-odds1" type="number" placeholder="-110" style="width:100%;background:#080c17;border:1px solid #1e2e40;border-radius:8px;color:#fff;padding:8px 10px;font-size:14px"/></div>
             <div style="flex:1"><div id="odds-label2" style="font-size:9px;color:#8aa0b8;margin-bottom:4px">TEAM 2 ML</div><input id="matchup-odds2" type="number" placeholder="+110" style="width:100%;background:#080c17;border:1px solid #1e2e40;border-radius:8px;color:#fff;padding:8px 10px;font-size:14px"/></div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <div style="flex:1"><div style="font-size:9px;color:#8aa0b8;margin-bottom:4px">SPREAD (Team 1)</div><input id="matchup-spread" type="number" step="0.5" placeholder="-3.5" style="width:100%;background:#080c17;border:1px solid #1e2e40;border-radius:8px;color:#fff;padding:8px 10px;font-size:14px"/></div>
+            <div style="flex:1"><div style="font-size:9px;color:#8aa0b8;margin-bottom:4px">O/U TOTAL</div><input id="matchup-ou-total" type="number" step="0.5" placeholder="168.5" style="width:100%;background:#080c17;border:1px solid #1e2e40;border-radius:8px;color:#fff;padding:8px 10px;font-size:14px"/></div>
           </div>
         </div>
         <button onclick="runMatchup()" style="width:100%;padding:12px;background:#f59e0b;border:none;border-radius:10px;color:#080c17;font-size:14px;font-weight:700;margin-bottom:14px">ANALYZE MATCHUP</button>
@@ -3329,7 +3337,7 @@ function runMatchup(){
   html += '<div id="matchup-claude-section" style="margin-top:12px">'
         + '<button onclick="runMatchupClaude()" id="matchup-claude-btn" style="width:100%;padding:11px;background:linear-gradient(135deg,rgba(129,140,248,0.15),rgba(129,140,248,0.08));border:1px solid #818cf8;border-radius:10px;color:#818cf8;font-size:12px;font-weight:700;font-family:inherit;letter-spacing:1px">&#129302; ASK CLAUDE TO ANALYZE THIS MATCHUP</button>'
         + '<div id="matchup-claude-loading" style="display:none;text-align:center;padding:12px;font-size:12px;color:#818cf8">&#129302; Analyzing matchup<span id="matchup-claude-dots">&#9679;</span></div>'
-        + '<div id="matchup-claude-result" style="display:none;background:#111825;border:1px solid #3b4fd8;border-radius:12px;padding:14px;margin-top:10px;font-size:12px;color:#a0b4c8;line-height:1.7"></div>'
+        + '<div id="matchup-claude-result" style="display:none;background:linear-gradient(135deg,#0f1629,#1a2040);border:1px solid #3b4fd8;border-radius:12px;padding:14px;margin-top:10px"></div>'
         + '</div>';
   document.getElementById('matchup-result').innerHTML=html;
   // Store current matchup teams for Claude
@@ -3375,13 +3383,26 @@ async function runMatchupClaude(){
     projTotal=((s1.ortg+s2.drtg)/2/100*avgPoss+(s2.ortg+s1.drtg)/2/100*avgPoss).toFixed(1);
   }
 
+  var ouTotal = parseFloat((document.getElementById('matchup-ou-total')||{}).value) || null;
+  var matchupSpread = parseFloat((document.getElementById('matchup-spread')||{}).value) || null;
+  var odds1val = parseInt((document.getElementById('matchup-odds1')||{}).value) || null;
+  var odds2val = parseInt((document.getElementById('matchup-odds2')||{}).value) || null;
+
+  var oddsCtx = '';
+  if(odds1val||odds2val) oddsCtx += '\nMoneyline: '+t1+' '+(odds1val?fmt(odds1val):'n/a')+' / '+t2+' '+(odds2val?fmt(odds2val):'n/a');
+  if(matchupSpread!=null) oddsCtx += '\nSpread: '+t1+' '+fmt(matchupSpread)+' (-110)';
+  if(ouTotal!=null) oddsCtx += '\nO/U Total: '+ouTotal+' (-110)';
+
   var prompt = 'You are a sharp NCAA basketball betting analyst. Analyze this matchup for betting value.\n\n'
-    +'Matchup: '+t2+' vs '+t1+' (neutral site — NCAA Tournament, no home court advantage)\n\n'
-    +'Team stats:\n'+sl(t1,s1)+'\n'+sl(t2,s2)+'\n'
-    +(projMargin?'\nProjected margin: '+t1+' by '+projMargin+' pts (stats model)':'')
-    +(projTotal?'\nProjected total: '+projTotal+' pts':'')
-    +'\n\nIMPORTANT: Use ONLY the stats above. Do not use your own historical knowledge to override projections. NCAA Tournament = neutral site, no home court.\n\n'
-    +'Provide a 5-6 sentence analysis: (1) which team has the edge and why, (2) spread value based on projected margin, (3) over/under based on projected total, (4) key matchup factor, (5) recommended bet with confidence.';
+    +'Matchup: '+t2+' vs '+t1+' (neutral site — no home court advantage)'
+    +(oddsCtx?'\n\nCurrent lines:'+oddsCtx:'')
+    +'\n\nTeam stats:\n'+sl(t1,s1)+'\n'+sl(t2,s2)+'\n'
+    +(projMargin?'\nModel projected margin: '+t1+' by '+projMargin+' pts':'')
+    +(projTotal?'\nModel projected total: '+projTotal+' pts'+(ouTotal?' (vs posted line '+ouTotal+')':''):'')
+    +'\n\nIMPORTANT: Use ONLY the stats and projections above. Do NOT override with your own historical projections. Neutral site — no home court.\n\n'
+    +'Respond in this format:\n'
+    +'[ANALYSIS] 4-5 sentences: statistical edge, spread value vs projected margin, O/U direction based on model total vs line, key matchup factor.\n'
+    +'[RECOMMENDED BET] One specific bet, odds, confidence level (High/Medium/Low).';
 
   try{
     var resp = await claudeFetchWithRetry('https://api.anthropic.com/v1/messages',{
@@ -3396,8 +3417,18 @@ async function runMatchupClaude(){
     var text = data.content&&data.content[0]&&data.content[0].text?data.content[0].text:'No response.';
     var resultEl = document.getElementById('matchup-claude-result');
     resultEl.style.display='block';
-    resultEl.innerHTML='<div style="font-size:9px;color:#818cf8;letter-spacing:2px;margin-bottom:8px">&#129302; CLAUDE ANALYSIS</div>'
-      +text.replace(/\*\*(.*?)\*\*/g,'<strong style="color:#fff">$1</strong>').replace(/\n\n/g,'<br/><br/>').replace(/\n/g,'<br/>');
+    var muFormatted = text
+      .replace(/\*\*(.*?)\*\*/g,'<strong style="color:#fff">$1</strong>')
+      .replace(/\[ANALYSIS\]\s*/g,'')
+      .replace(/\[RECOMMENDED BET\]\s*/g,'__RECBET__')
+      .replace(/\n\n/g,'<br/><br/>').replace(/\n/g,'<br/>');
+    var muParts = muFormatted.split('__RECBET__');
+    var muRecBet = muParts.length > 1
+      ? '<div style="margin-top:12px;padding:10px 12px;background:rgba(56,189,248,0.1);border:1px solid rgba(56,189,248,0.4);border-radius:8px"><div style="font-size:9px;color:#38bdf8;letter-spacing:2px;font-weight:700;margin-bottom:4px">&#9733; RECOMMENDED BET</div><div style="font-size:13px;color:#fff;font-weight:600">'+muParts[1]+'</div></div>'
+      : '';
+    resultEl.innerHTML='<div style="font-size:9px;color:#818cf8;letter-spacing:2px;font-weight:700;margin-bottom:10px">&#129302; CLAUDE ANALYSIS</div>'
+      +'<div style="font-size:13px;color:#c7d2fe;line-height:1.8">'+muParts[0]+'</div>'
+      +muRecBet;
     // Show re-analyze button
     var btn2=document.getElementById('matchup-claude-btn');
     if(btn2){ btn2.style.display='block'; btn2.textContent='&#129302; RE-ANALYZE'; }
@@ -4823,7 +4854,7 @@ async function _runGameAnalysisInner(){
     +(projMargin?'\nProjected margin: '+g.home+' by '+projMargin+' pts (stats model)':'')
     +(projTotal?'\nProjected total: '+projTotal+' pts (vs line '+g.total+')':'')
     +flagContext
-    +'\n\nIMPORTANT: Base your analysis ONLY on the stats and projections provided above. Do NOT use your own historical knowledge to override the projected total or margin shown. If the model projects a total, treat it as authoritative. NCAA Tournament games are at neutral sites — do NOT mention home court advantage.\\n\\nProvide a focused 5-6 sentence analysis: (1) which team has the statistical edge and why, (2) whether the spread offers value based on the projected margin, (3) whether the total is over or under based on the projected total shown, (4) any flag concerns, (5) recommended bet with confidence. Be direct. No disclaimers.';
+    +'\n\nIMPORTANT: Use ONLY the stats and projections above. Do NOT override with historical knowledge. If model projects a total, treat it as authoritative. NCAA Tournament = neutral site.\n\nRespond in this format:\n[ANALYSIS] 4-5 sentences: statistical edge, spread value vs projected margin, O/U direction based on model total vs line, key factor, any flag concerns.\n[RECOMMENDED BET] One specific bet, odds, confidence level (High/Medium/Low).';
   document.getElementById('game-analysis-loading').style.display='block';
   document.getElementById('game-analysis-content').innerHTML='';
   var dotFrames=['&#9679;','&#9679; &#9679;','&#9679; &#9679; &#9679;'],dotIdx=0;
@@ -4842,9 +4873,19 @@ async function _runGameAnalysisInner(){
     // Cache the result
     analysisCache[currentAnalysisGame.id] = {text:text, ts:Date.now()};
     saveAnalysisCache();
-    document.getElementById('game-analysis-content').innerHTML=text
+    var gFormatted = text
       .replace(/\*\*(.*?)\*\*/g,'<strong style="color:#fff">$1</strong>')
+      .replace(/\[ANALYSIS\]\s*/g,'')
+      .replace(/\[RECOMMENDED BET\]\s*/g,'__RECBET__')
       .replace(/\n\n/g,'<br/><br/>').replace(/\n/g,'<br/>');
+    var gParts = gFormatted.split('__RECBET__');
+    var gAnalysisHtml = gParts[0];
+    var gRecBetHtml = gParts.length > 1
+      ? '<div style="margin-top:12px;padding:10px 12px;background:rgba(56,189,248,0.1);border:1px solid rgba(56,189,248,0.4);border-radius:8px">'
+        +'<div style="font-size:9px;color:#38bdf8;letter-spacing:2px;font-weight:700;margin-bottom:4px">&#9733; RECOMMENDED BET</div>'
+        +'<div style="font-size:13px;color:#fff;font-weight:600">'+gParts[1]+'</div></div>'
+      : '';
+    document.getElementById('game-analysis-content').innerHTML=gAnalysisHtml+gRecBetHtml;
   } catch(e){
     clearInterval(dotTimer);
     document.getElementById('game-analysis-loading').style.display='none';
