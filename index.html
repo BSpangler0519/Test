@@ -595,14 +595,13 @@ button{cursor:pointer}
           </div>
         </div>
         <div style="background:#111825;border:1px solid #1a2a3a;border-radius:10px;padding:12px;margin-bottom:12px">
-          <div style="font-size:9px;color:#f59e0b;letter-spacing:2px;margin-bottom:10px">CURRENT ODDS (optional)</div>
-          <div style="display:flex;gap:8px;margin-bottom:8px">
+          <div style="font-size:9px;color:#f59e0b;letter-spacing:2px;margin-bottom:10px">MONEYLINE ODDS (optional — auto-filled from live games)</div>
+          <div style="display:flex;gap:8px">
             <div style="flex:1"><div id="odds-label1" style="font-size:9px;color:#8aa0b8;margin-bottom:4px">TEAM 1 ML</div><input id="matchup-odds1" type="number" placeholder="-110" style="width:100%;background:#080c17;border:1px solid #1e2e40;border-radius:8px;color:#fff;padding:8px 10px;font-size:14px"/></div>
             <div style="flex:1"><div id="odds-label2" style="font-size:9px;color:#8aa0b8;margin-bottom:4px">TEAM 2 ML</div><input id="matchup-odds2" type="number" placeholder="+110" style="width:100%;background:#080c17;border:1px solid #1e2e40;border-radius:8px;color:#fff;padding:8px 10px;font-size:14px"/></div>
           </div>
-          <div style="display:flex;gap:8px">
-            <div style="flex:1"><div style="font-size:9px;color:#8aa0b8;margin-bottom:4px">SPREAD (Team 1)</div><input id="matchup-spread" type="number" step="0.5" placeholder="-3.5" style="width:100%;background:#080c17;border:1px solid #1e2e40;border-radius:8px;color:#fff;padding:8px 10px;font-size:14px"/></div>
-            <div style="flex:1"><div style="font-size:9px;color:#8aa0b8;margin-bottom:4px">O/U TOTAL</div><input id="matchup-ou-total" type="number" step="0.5" placeholder="168.5" style="width:100%;background:#080c17;border:1px solid #1e2e40;border-radius:8px;color:#fff;padding:8px 10px;font-size:14px"/></div>
+          <div id="matchup-live-badge" style="display:none;margin-top:8px;padding:6px 10px;background:rgba(56,189,248,0.08);border:1px solid rgba(56,189,248,0.3);border-radius:8px;font-size:10px;color:#38bdf8">
+            &#9679; Live odds auto-loaded from games feed
           </div>
         </div>
         <button onclick="runMatchup()" style="width:100%;padding:12px;background:#f59e0b;border:none;border-radius:10px;color:#080c17;font-size:14px;font-weight:700;margin-bottom:14px">ANALYZE MATCHUP</button>
@@ -1383,14 +1382,13 @@ button{cursor:pointer}
           </div>
         </div>
         <div style="background:#111825;border:1px solid #1a2a3a;border-radius:10px;padding:12px;margin-bottom:12px">
-          <div style="font-size:9px;color:#f59e0b;letter-spacing:2px;margin-bottom:10px">CURRENT ODDS (optional)</div>
-          <div style="display:flex;gap:8px;margin-bottom:8px">
+          <div style="font-size:9px;color:#f59e0b;letter-spacing:2px;margin-bottom:10px">MONEYLINE ODDS (optional — auto-filled from live games)</div>
+          <div style="display:flex;gap:8px">
             <div style="flex:1"><div id="odds-label1" style="font-size:9px;color:#8aa0b8;margin-bottom:4px">TEAM 1 ML</div><input id="matchup-odds1" type="number" placeholder="-110" style="width:100%;background:#080c17;border:1px solid #1e2e40;border-radius:8px;color:#fff;padding:8px 10px;font-size:14px"/></div>
             <div style="flex:1"><div id="odds-label2" style="font-size:9px;color:#8aa0b8;margin-bottom:4px">TEAM 2 ML</div><input id="matchup-odds2" type="number" placeholder="+110" style="width:100%;background:#080c17;border:1px solid #1e2e40;border-radius:8px;color:#fff;padding:8px 10px;font-size:14px"/></div>
           </div>
-          <div style="display:flex;gap:8px">
-            <div style="flex:1"><div style="font-size:9px;color:#8aa0b8;margin-bottom:4px">SPREAD (Team 1)</div><input id="matchup-spread" type="number" step="0.5" placeholder="-3.5" style="width:100%;background:#080c17;border:1px solid #1e2e40;border-radius:8px;color:#fff;padding:8px 10px;font-size:14px"/></div>
-            <div style="flex:1"><div style="font-size:9px;color:#8aa0b8;margin-bottom:4px">O/U TOTAL</div><input id="matchup-ou-total" type="number" step="0.5" placeholder="168.5" style="width:100%;background:#080c17;border:1px solid #1e2e40;border-radius:8px;color:#fff;padding:8px 10px;font-size:14px"/></div>
+          <div id="matchup-live-badge" style="display:none;margin-top:8px;padding:6px 10px;background:rgba(56,189,248,0.08);border:1px solid rgba(56,189,248,0.3);border-radius:8px;font-size:10px;color:#38bdf8">
+            &#9679; Live odds auto-loaded from games feed
           </div>
         </div>
         <button onclick="runMatchup()" style="width:100%;padding:12px;background:#f59e0b;border:none;border-radius:10px;color:#080c17;font-size:14px;font-weight:700;margin-bottom:14px">ANALYZE MATCHUP</button>
@@ -3345,6 +3343,40 @@ function runMatchup(){
   window._matchupTeam2 = matchupTeam2;
   window._matchupS1 = s1;
   window._matchupS2 = s2;
+  // Auto-find live game in allGamesData and populate odds
+  window._matchupGame = null;
+  if(typeof allGamesData !== 'undefined' && allGamesData.length){
+    var t1lc = matchupTeam1.toLowerCase(), t2lc = matchupTeam2.toLowerCase();
+    window._matchupGame = allGamesData.find(function(g){
+      var hl=g.home.toLowerCase(), al=g.away.toLowerCase();
+      return (fuzzyTeamMatch(t1lc,hl)||fuzzyTeamMatch(t1lc,al))
+          && (fuzzyTeamMatch(t2lc,hl)||fuzzyTeamMatch(t2lc,al));
+    });
+  }
+  // Auto-fill ML odds and show live badge when game found
+  var badge = document.getElementById('matchup-live-badge');
+  var claudeBtn = document.getElementById('matchup-claude-btn');
+  if(window._matchupGame){
+    var g = window._matchupGame;
+    // Determine which input is team1 vs team2
+    var t1IsHome = fuzzyTeamMatch(matchupTeam1.toLowerCase(), g.home.toLowerCase());
+    var o1 = document.getElementById('matchup-odds1');
+    var o2 = document.getElementById('matchup-odds2');
+    if(o1) o1.value = t1IsHome ? g.homeML : g.awayML;
+    if(o2) o2.value = t1IsHome ? g.awayML : g.homeML;
+    // Update badge with full lines info
+    var linesInfo = [];
+    if(g.spread!=null) linesInfo.push(g.home+' '+fmt(g.spread));
+    if(g.total!=null) linesInfo.push('O/U '+g.total);
+    if(badge){
+      badge.style.display='block';
+      badge.innerHTML = '&#9679; Live odds: '+linesInfo.join(' &middot; ')+(g.book?' ('+g.book+')':'');
+    }
+    if(claudeBtn) claudeBtn.innerHTML = '&#129302; ASK CLAUDE &mdash; Spread '+fmt(g.spread||0)+' &middot; O/U '+g.total;
+  } else {
+    if(badge) badge.style.display='none';
+    if(claudeBtn) claudeBtn.innerHTML = '&#129302; ASK CLAUDE TO ANALYZE THIS MATCHUP';
+  }
 }
 
 
@@ -3383,15 +3415,26 @@ async function runMatchupClaude(){
     projTotal=((s1.ortg+s2.drtg)/2/100*avgPoss+(s2.ortg+s1.drtg)/2/100*avgPoss).toFixed(1);
   }
 
-  var ouTotal = parseFloat((document.getElementById('matchup-ou-total')||{}).value) || null;
-  var matchupSpread = parseFloat((document.getElementById('matchup-spread')||{}).value) || null;
-  var odds1val = parseInt((document.getElementById('matchup-odds1')||{}).value) || null;
-  var odds2val = parseInt((document.getElementById('matchup-odds2')||{}).value) || null;
+  // Use live game data if available, fall back to manual inputs
+  var liveGame = window._matchupGame || null;
+  var ouTotal = liveGame && liveGame.total!=null ? liveGame.total
+    : parseFloat((document.getElementById('matchup-ou-total')||{}).value) || null;
+  var matchupSpread = liveGame && liveGame.spread!=null ? liveGame.spread
+    : parseFloat((document.getElementById('matchup-spread')||{}).value) || null;
+  var spreadOdds = liveGame ? (liveGame.spreadOdds || -110) : -110;
+  var totalOdds  = liveGame ? (liveGame.totalOdds  || -110) : -110;
+  var odds1val = liveGame ? liveGame.homeML : (parseInt((document.getElementById('matchup-odds1')||{}).value) || null);
+  var odds2val = liveGame ? liveGame.awayML : (parseInt((document.getElementById('matchup-odds2')||{}).value) || null);
+  // Determine which team in liveGame corresponds to t1 (matchupTeam1)
+  var t1IsHome = liveGame ? fuzzyTeamMatch(t1.toLowerCase(), liveGame.home.toLowerCase()) : true;
+  var t1Spread = matchupSpread!=null ? (t1IsHome ? matchupSpread : -matchupSpread) : null;
+  var t1ML = t1IsHome ? odds1val : odds2val;
+  var t2ML = t1IsHome ? odds2val : odds1val;
 
   var oddsCtx = '';
-  if(odds1val||odds2val) oddsCtx += '\nMoneyline: '+t1+' '+(odds1val?fmt(odds1val):'n/a')+' / '+t2+' '+(odds2val?fmt(odds2val):'n/a');
-  if(matchupSpread!=null) oddsCtx += '\nSpread: '+t1+' '+fmt(matchupSpread)+' (-110)';
-  if(ouTotal!=null) oddsCtx += '\nO/U Total: '+ouTotal+' (-110)';
+  if(t1ML||t2ML) oddsCtx += '\nMoneyline: '+t1+' '+(t1ML?fmt(t1ML):'n/a')+' / '+t2+' '+(t2ML?fmt(t2ML):'n/a');
+  if(t1Spread!=null) oddsCtx += '\nSpread: '+t1+' '+fmt(t1Spread)+' ('+fmt(spreadOdds)+')';
+  if(ouTotal!=null) oddsCtx += '\nO/U Total: '+ouTotal+' ('+fmt(totalOdds)+')';
 
   var prompt = 'You are a sharp NCAA basketball betting analyst. Analyze this matchup for betting value.\n\n'
     +'Matchup: '+t2+' vs '+t1+' (neutral site — no home court advantage)'
@@ -3400,10 +3443,7 @@ async function runMatchupClaude(){
     +(projMargin?'\nModel projected margin: '+t1+' by '+projMargin+' pts':'')
     +(projTotal?'\nModel projected total: '+projTotal+' pts'+(ouTotal?' (vs posted line '+ouTotal+')':''):'')
     +'\n\nIMPORTANT: Use ONLY the stats and projections above. Do NOT override with your own historical projections. Neutral site — no home court.\n\n'
-    +'Respond in this format:\n'
-    +'[ANALYSIS] 4-5 sentences: statistical edge, spread value vs projected margin, O/U direction based on model total vs line, key matchup factor.\n'
-    +'[RECOMMENDED BET] One specific bet, odds, confidence level (High/Medium/Low).';
-
+    +'Respond in EXACTLY this format:\n'    +'[ANALYSIS]\n'    +'4-5 sentences: statistical edge, spread vs projected margin, O/U direction based on model total vs line, key factor.\n\n'    +'[RECOMMENDED BETS]\n'    +'- \u2705 [Pick] ([Odds]) | Confidence: X/10\n'    +'- \u2705 [Pick] ([Odds]) | Confidence: X/10\n'    +'List 1-3 best bets. Add \u2190 *stronger play* on the best one.';
   try{
     var resp = await claudeFetchWithRetry('https://api.anthropic.com/v1/messages',{
       method:'POST',
@@ -3423,9 +3463,19 @@ async function runMatchupClaude(){
       .replace(/\[RECOMMENDED BET\]\s*/g,'__RECBET__')
       .replace(/\n\n/g,'<br/><br/>').replace(/\n/g,'<br/>');
     var muParts = muFormatted.split('__RECBET__');
-    var muRecBet = muParts.length > 1
-      ? '<div style="margin-top:12px;padding:10px 12px;background:rgba(56,189,248,0.1);border:1px solid rgba(56,189,248,0.4);border-radius:8px"><div style="font-size:9px;color:#38bdf8;letter-spacing:2px;font-weight:700;margin-bottom:4px">&#9733; RECOMMENDED BET</div><div style="font-size:13px;color:#fff;font-weight:600">'+muParts[1]+'</div></div>'
-      : '';
+    var muRecBet = '';
+    if(muParts.length > 1){
+      var bets = muParts[1].trim().split('\n').filter(function(l){return l.trim().length>0;});
+      muRecBet = '<div style="margin-top:12px;padding:12px;background:rgba(56,189,248,0.06);border:1px solid rgba(56,189,248,0.3);border-radius:10px">'
+        +'<div style="font-size:9px;color:#38bdf8;letter-spacing:2px;font-weight:700;margin-bottom:8px">&#9733; RECOMMENDED BETS</div>'
+        +'<div style="font-size:13px;line-height:2">'
+        +bets.map(function(line){
+          var strong = line.indexOf('stronger play') > -1;
+          var cleaned = line.replace(/^-\s*/,'').replace(/<br\/>/g,'').trim();
+          return '<div style="color:'+(strong?'#fff':'#c7d2fe')+';'+(strong?'font-weight:700;':'')+'">'+(cleaned||line)+'</div>';
+        }).join('')
+        +'</div></div>';
+    }
     resultEl.innerHTML='<div style="font-size:9px;color:#818cf8;letter-spacing:2px;font-weight:700;margin-bottom:10px">&#129302; CLAUDE ANALYSIS</div>'
       +'<div style="font-size:13px;color:#c7d2fe;line-height:1.8">'+muParts[0]+'</div>'
       +muRecBet;
@@ -4854,7 +4904,7 @@ async function _runGameAnalysisInner(){
     +(projMargin?'\nProjected margin: '+g.home+' by '+projMargin+' pts (stats model)':'')
     +(projTotal?'\nProjected total: '+projTotal+' pts (vs line '+g.total+')':'')
     +flagContext
-    +'\n\nIMPORTANT: Use ONLY the stats and projections above. Do NOT override with historical knowledge. If model projects a total, treat it as authoritative. NCAA Tournament = neutral site.\n\nRespond in this format:\n[ANALYSIS] 4-5 sentences: statistical edge, spread value vs projected margin, O/U direction based on model total vs line, key factor, any flag concerns.\n[RECOMMENDED BET] One specific bet, odds, confidence level (High/Medium/Low).';
+    +'\n\nIMPORTANT: Use ONLY the stats and projections above. Do NOT override with historical knowledge. If model projects a total, treat it as authoritative. NCAA Tournament = neutral site.\n\nRespond in EXACTLY this format:\\n[ANALYSIS]\\n4-5 sentences: statistical edge, spread vs projected margin, O/U direction based on model total vs line, key factor, any flag concerns.\\n\\n[RECOMMENDED BETS]\\n- \u2705 [Pick] ([Odds]) | Confidence: X/10\\n- \u2705 [Pick] ([Odds]) | Confidence: X/10\\nList 1-3 best bets. Add \u2190 *stronger play* on the best one.';
   document.getElementById('game-analysis-loading').style.display='block';
   document.getElementById('game-analysis-content').innerHTML='';
   var dotFrames=['&#9679;','&#9679; &#9679;','&#9679; &#9679; &#9679;'],dotIdx=0;
@@ -4880,11 +4930,19 @@ async function _runGameAnalysisInner(){
       .replace(/\n\n/g,'<br/><br/>').replace(/\n/g,'<br/>');
     var gParts = gFormatted.split('__RECBET__');
     var gAnalysisHtml = gParts[0];
-    var gRecBetHtml = gParts.length > 1
-      ? '<div style="margin-top:12px;padding:10px 12px;background:rgba(56,189,248,0.1);border:1px solid rgba(56,189,248,0.4);border-radius:8px">'
-        +'<div style="font-size:9px;color:#38bdf8;letter-spacing:2px;font-weight:700;margin-bottom:4px">&#9733; RECOMMENDED BET</div>'
-        +'<div style="font-size:13px;color:#fff;font-weight:600">'+gParts[1]+'</div></div>'
-      : '';
+    var gRecBetHtml = '';
+    if(gParts.length > 1){
+      var gBets = gParts[1].trim().split('\n').filter(function(l){return l.trim().length>0;});
+      gRecBetHtml = '<div style="margin-top:12px;padding:12px;background:rgba(56,189,248,0.06);border:1px solid rgba(56,189,248,0.3);border-radius:10px">'
+        +'<div style="font-size:9px;color:#38bdf8;letter-spacing:2px;font-weight:700;margin-bottom:8px">&#9733; RECOMMENDED BETS</div>'
+        +'<div style="font-size:13px;line-height:2">'
+        +gBets.map(function(line){
+          var strong = line.indexOf('stronger play') > -1;
+          var cleaned = line.replace(/^-\s*/,'').replace(/<br\/>/g,'').trim();
+          return '<div style="color:'+(strong?'#fff':'#c7d2fe')+';'+(strong?'font-weight:700;':'')+'">'+(cleaned||line)+'</div>';
+        }).join('')
+        +'</div></div>';
+    }
     document.getElementById('game-analysis-content').innerHTML=gAnalysisHtml+gRecBetHtml;
   } catch(e){
     clearInterval(dotTimer);
